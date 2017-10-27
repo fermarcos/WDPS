@@ -1,0 +1,158 @@
+[Sun Oct 08 08:53:26.951380 2017] [mpm_event:notice] [pid 3770:tid 139958640650112] AH00489: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 08:53:26.951863 2017] [core:notice] [pid 3770:tid 139958640650112] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:07:59.929966 2017] [mpm_event:notice] [pid 3770:tid 139958640650112] AH00491: caught SIGTERM, shutting down
+[Sun Oct 08 09:08:01.312975 2017] [mpm_prefork:notice] [pid 5429] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:08:01.313300 2017] [core:notice] [pid 5429] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:08:04.073185 2017] [mpm_prefork:notice] [pid 5429] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:08:05.605159 2017] [mpm_prefork:notice] [pid 5528] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:08:05.605278 2017] [core:notice] [pid 5528] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:13:41.041294 2017] [mpm_prefork:notice] [pid 5528] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:13:42.260159 2017] [mpm_prefork:notice] [pid 5854] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:13:42.260287 2017] [core:notice] [pid 5854] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:43:05.800157 2017] [mpm_prefork:notice] [pid 5854] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:43:08.000908 2017] [:notice] [pid 6360] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 09:43:08.001351 2017] [:notice] [pid 6360] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 09:43:08.001492 2017] [:notice] [pid 6360] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 09:43:08.025326 2017] [:notice] [pid 6360] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 09:43:08.025389 2017] [:notice] [pid 6360] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 09:43:08.025437 2017] [:notice] [pid 6360] Status engine is currently disabled, enable it by set SecStatusEngine to On.
+[Sun Oct 08 09:43:09.014105 2017] [mpm_prefork:notice] [pid 6361] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:43:09.014217 2017] [core:notice] [pid 6361] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:43:14.974512 2017] [mpm_prefork:notice] [pid 6361] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:43:17.000997 2017] [:notice] [pid 6437] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 09:43:17.001506 2017] [:notice] [pid 6437] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 09:43:17.001571 2017] [:notice] [pid 6437] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 09:43:17.001676 2017] [:notice] [pid 6437] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 09:43:17.001728 2017] [:notice] [pid 6437] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 09:43:17.002278 2017] [:notice] [pid 6437] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Sun Oct 08 09:43:18.699069 2017] [:notice] [pid 6437] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Sun Oct 08 09:43:20.022100 2017] [mpm_prefork:notice] [pid 6438] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:43:20.022205 2017] [core:notice] [pid 6438] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:44:55.958413 2017] [mpm_prefork:notice] [pid 6438] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:44:58.001188 2017] [:notice] [pid 6557] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 09:44:58.077459 2017] [:notice] [pid 6557] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 09:44:58.077522 2017] [:notice] [pid 6557] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 09:44:58.077909 2017] [:notice] [pid 6557] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 09:44:58.077972 2017] [:notice] [pid 6557] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 09:44:58.078218 2017] [:notice] [pid 6557] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Sun Oct 08 09:44:58.499443 2017] [:notice] [pid 6557] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Sun Oct 08 09:44:59.039277 2017] [mpm_prefork:notice] [pid 6558] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:44:59.039458 2017] [core:notice] [pid 6558] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:48:32.353521 2017] [mpm_prefork:notice] [pid 6558] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:48:34.000691 2017] [:notice] [pid 6684] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 09:48:34.043309 2017] [:notice] [pid 6684] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 09:48:34.043371 2017] [:notice] [pid 6684] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 09:48:34.043533 2017] [:notice] [pid 6684] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 09:48:34.043585 2017] [:notice] [pid 6684] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 09:48:34.043829 2017] [:notice] [pid 6684] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Sun Oct 08 09:48:36.417951 2017] [:notice] [pid 6684] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Sun Oct 08 09:48:37.031754 2017] [mpm_prefork:notice] [pid 6685] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:48:37.031978 2017] [core:notice] [pid 6685] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 09:58:01.238196 2017] [mpm_prefork:notice] [pid 6685] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 09:58:03.001655 2017] [:notice] [pid 6809] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 09:58:03.002084 2017] [:notice] [pid 6809] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 09:58:03.002145 2017] [:notice] [pid 6809] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 09:58:03.002250 2017] [:notice] [pid 6809] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 09:58:03.002301 2017] [:notice] [pid 6809] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 09:58:03.002837 2017] [:notice] [pid 6809] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Sun Oct 08 09:58:03.378683 2017] [:notice] [pid 6809] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Sun Oct 08 09:58:04.034233 2017] [mpm_prefork:notice] [pid 6810] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 09:58:04.034512 2017] [core:notice] [pid 6810] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 10:02:23.676276 2017] [mpm_prefork:notice] [pid 6810] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 10:02:26.000568 2017] [:notice] [pid 6908] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 10:02:26.001203 2017] [:notice] [pid 6908] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 10:02:26.001266 2017] [:notice] [pid 6908] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 10:02:26.001366 2017] [:notice] [pid 6908] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 10:02:26.001417 2017] [:notice] [pid 6908] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 10:02:26.001651 2017] [:notice] [pid 6908] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Sun Oct 08 10:02:26.343158 2017] [:notice] [pid 6908] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Sun Oct 08 10:02:27.035347 2017] [mpm_prefork:notice] [pid 6909] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 10:02:27.035946 2017] [core:notice] [pid 6909] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 10:02:28.967276 2017] [mpm_prefork:notice] [pid 6909] AH00169: caught SIGTERM, shutting down
+[Sun Oct 08 10:02:31.001608 2017] [:notice] [pid 7017] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Sun Oct 08 10:02:31.001797 2017] [:notice] [pid 7017] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Sun Oct 08 10:02:31.001814 2017] [:notice] [pid 7017] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Sun Oct 08 10:02:31.001825 2017] [:notice] [pid 7017] ModSecurity: LUA compiled version="Lua 5.1"
+[Sun Oct 08 10:02:31.001835 2017] [:notice] [pid 7017] ModSecurity: LIBXML compiled version="2.9.1"
+[Sun Oct 08 10:02:31.001920 2017] [:notice] [pid 7017] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Sun Oct 08 10:02:31.435121 2017] [:notice] [pid 7017] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Sun Oct 08 10:02:32.039877 2017] [mpm_prefork:notice] [pid 7018] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Sun Oct 08 10:02:32.040091 2017] [core:notice] [pid 7018] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Oct 08 10:02:42.545309 2017] [:error] [pid 7022] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "Wdo@En8AAQEAABtuWcoAAAAB"]
+[Sun Oct 08 10:13:43.819322 2017] [:error] [pid 7021] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpAp38AAQEAABttJUMAAAAA"]
+[Sun Oct 08 10:14:14.600950 2017] [:error] [pid 7024] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpAxn8AAQEAABtwymwAAAAD"]
+[Sun Oct 08 10:21:06.356895 2017] [:error] [pid 7046] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpCYn8AAQEAABuGVq8AAAAF"]
+[Sun Oct 08 10:21:11.882641 2017] [:error] [pid 7022] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpCZ38AAQEAABtuWcsAAAAB"]
+[Sun Oct 08 10:21:19.080636 2017] [:error] [pid 7021] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpCb38AAQEAABttJUQAAAAA"]
+[Sun Oct 08 10:21:28.525271 2017] [:error] [pid 7021] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpCeH8AAQEAABttJUYAAAAA"]
+[Sun Oct 08 10:21:44.437713 2017] [:error] [pid 7023] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpCiH8AAQEAABtvl3oAAAAC"]
+[Sun Oct 08 10:21:48.603794 2017] [:error] [pid 7023] [client 192.168.60.1] ModSecurity: Access denied with code 403 (phase 2). Pattern match "(?:\\\\b(?:\\\\.(?:ht(?:access|passwd|group)|www_?acl)|global\\\\.asa|httpd\\\\.conf|boot\\\\.ini)\\\\b|\\\\/etc\\\\/)" at ARGS:pagina. [file "/usr/share/modsecurity-crs/activated_rules/modsecurity_crs_40_generic_attacks.conf"] [line "205"] [id "950005"] [rev "3"] [msg "Remote File Access Attempt"] [data "Matched Data: /etc/ found within ARGS:pagina: /etc/passwd"] [severity "CRITICAL"] [ver "OWASP_CRS/2.2.9"] [maturity "9"] [accuracy "9"] [tag "OWASP_CRS/WEB_ATTACK/FILE_INJECTION"] [tag "WASCTC/WASC-33"] [tag "OWASP_TOP_10/A4"] [tag "PCI/6.5.4"] [hostname "192.168.60.35"] [uri "/vulnerable.php"] [unique_id "WdpCjH8AAQEAABtvl3sAAAAC"]
+[Mon Oct 23 00:26:20.001394 2017] [:notice] [pid 744] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Mon Oct 23 00:26:20.065947 2017] [:notice] [pid 744] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Mon Oct 23 00:26:20.065988 2017] [:notice] [pid 744] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Mon Oct 23 00:26:20.066000 2017] [:notice] [pid 744] ModSecurity: LUA compiled version="Lua 5.1"
+[Mon Oct 23 00:26:20.066009 2017] [:notice] [pid 744] ModSecurity: LIBXML compiled version="2.9.1"
+[Mon Oct 23 00:26:20.066300 2017] [:notice] [pid 744] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Mon Oct 23 00:26:20.227504 2017] [:notice] [pid 744] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Mon Oct 23 00:26:22.014695 2017] [mpm_prefork:notice] [pid 751] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 00:26:22.014913 2017] [core:notice] [pid 751] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 00:34:18.164758 2017] [mpm_prefork:notice] [pid 751] AH00171: Graceful restart requested, doing restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+[Mon Oct 23 00:34:19.000498 2017] [mpm_prefork:notice] [pid 751] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 00:34:19.000551 2017] [core:notice] [pid 751] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 00:34:20.346770 2017] [mpm_prefork:notice] [pid 751] AH00171: Graceful restart requested, doing restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+[Mon Oct 23 00:34:21.000578 2017] [mpm_prefork:notice] [pid 751] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 00:34:21.312262 2017] [core:notice] [pid 751] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 00:34:34.734046 2017] [mpm_prefork:notice] [pid 751] AH00171: Graceful restart requested, doing restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+[Mon Oct 23 00:34:36.003899 2017] [mpm_prefork:notice] [pid 751] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 00:34:36.003952 2017] [core:notice] [pid 751] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 00:45:29.469436 2017] [mpm_prefork:notice] [pid 751] AH00169: caught SIGTERM, shutting down
+[Mon Oct 23 00:45:31.000530 2017] [:notice] [pid 3520] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Mon Oct 23 00:45:31.000734 2017] [:notice] [pid 3520] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Mon Oct 23 00:45:31.000751 2017] [:notice] [pid 3520] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Mon Oct 23 00:45:31.000762 2017] [:notice] [pid 3520] ModSecurity: LUA compiled version="Lua 5.1"
+[Mon Oct 23 00:45:31.000773 2017] [:notice] [pid 3520] ModSecurity: LIBXML compiled version="2.9.1"
+[Mon Oct 23 00:45:31.000942 2017] [:notice] [pid 3520] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Mon Oct 23 00:45:31.150541 2017] [:notice] [pid 3520] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Mon Oct 23 00:45:32.026222 2017] [mpm_prefork:notice] [pid 3521] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 00:45:32.026333 2017] [core:notice] [pid 3521] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 00:50:38.686231 2017] [mpm_prefork:notice] [pid 3521] AH00169: caught SIGTERM, shutting down
+[Mon Oct 23 00:50:41.001723 2017] [:notice] [pid 3706] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Mon Oct 23 00:50:41.001924 2017] [:notice] [pid 3706] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Mon Oct 23 00:50:41.001941 2017] [:notice] [pid 3706] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Mon Oct 23 00:50:41.001953 2017] [:notice] [pid 3706] ModSecurity: LUA compiled version="Lua 5.1"
+[Mon Oct 23 00:50:41.001964 2017] [:notice] [pid 3706] ModSecurity: LIBXML compiled version="2.9.1"
+[Mon Oct 23 00:50:41.002160 2017] [:notice] [pid 3706] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Mon Oct 23 00:50:41.232231 2017] [:notice] [pid 3706] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Mon Oct 23 00:50:42.013672 2017] [mpm_prefork:notice] [pid 3707] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 00:50:42.013781 2017] [core:notice] [pid 3707] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 02:51:42.239869 2017] [mpm_prefork:notice] [pid 3707] AH00169: caught SIGTERM, shutting down
+[Mon Oct 23 02:51:45.005028 2017] [:notice] [pid 5668] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Mon Oct 23 02:51:45.005328 2017] [:notice] [pid 5668] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Mon Oct 23 02:51:45.005344 2017] [:notice] [pid 5668] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Mon Oct 23 02:51:45.005356 2017] [:notice] [pid 5668] ModSecurity: LUA compiled version="Lua 5.1"
+[Mon Oct 23 02:51:45.005366 2017] [:notice] [pid 5668] ModSecurity: LIBXML compiled version="2.9.1"
+[Mon Oct 23 02:51:45.005657 2017] [:notice] [pid 5668] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Mon Oct 23 02:51:45.181478 2017] [:notice] [pid 5668] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Mon Oct 23 02:51:46.031089 2017] [mpm_prefork:notice] [pid 5669] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 02:51:46.031341 2017] [core:notice] [pid 5669] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 03:01:54.683732 2017] [mpm_prefork:notice] [pid 5669] AH00169: caught SIGTERM, shutting down
+[Mon Oct 23 03:01:57.000117 2017] [:notice] [pid 5861] ModSecurity for Apache/2.8.0 (http://www.modsecurity.org/) configured.
+[Mon Oct 23 03:01:57.000320 2017] [:notice] [pid 5861] ModSecurity: APR compiled version="1.5.1"; loaded version="1.5.1"
+[Mon Oct 23 03:01:57.000336 2017] [:notice] [pid 5861] ModSecurity: PCRE compiled version="8.35 "; loaded version="8.35 2014-04-04"
+[Mon Oct 23 03:01:57.000347 2017] [:notice] [pid 5861] ModSecurity: LUA compiled version="Lua 5.1"
+[Mon Oct 23 03:01:57.000357 2017] [:notice] [pid 5861] ModSecurity: LIBXML compiled version="2.9.1"
+[Mon Oct 23 03:01:57.000437 2017] [:notice] [pid 5861] ModSecurity: StatusEngine call: "2.8.0,Apache/2.4.10 (Debian),1.5.1/1.5.1,8.35/8.35 2014-04-04,Lua 5.1,2.9.1,7b"
+[Mon Oct 23 03:01:57.119162 2017] [:notice] [pid 5861] ModSecurity: StatusEngine call successfully sent. For more information visit: http://status.modsecurity.org/
+[Mon Oct 23 03:01:58.017476 2017] [mpm_prefork:notice] [pid 5862] AH00163: Apache/2.4.10 (Debian) configured -- resuming normal operations
+[Mon Oct 23 03:01:58.017635 2017] [core:notice] [pid 5862] AH00094: Command line: '/usr/sbin/apache2'
+[Mon Oct 23 03:43:48.789763 2017] [:error] [pid 6782] [client 192.168.60.1:7724] PHP Notice:  Undefined variable: divisor in /var/www/html/prueba.php on line 2
+[Mon Oct 23 03:43:48.789976 2017] [:error] [pid 6782] [client 192.168.60.1:7724] PHP Fatal error:  No se puede dividir por cero in /var/www/html/prueba.php on line 3
+[Mon Oct 23 03:57:49.159372 2017] [:error] [pid 5866] [client 192.168.60.1:7819] PHP Fatal error:  Call to undefined function otrafuncion() in /var/www/html/prueba2.php on line 6
+[Mon Oct 23 10:36:24.308919 2017] [:error] [pid 5865] [client 192.168.60.1:12188] PHP Warning:  include(no_existe.php): failed to open stream: No such file or directory in /var/www/html/prueba3.php on line 3
+[Mon Oct 23 10:36:24.309120 2017] [:error] [pid 5865] [client 192.168.60.1:12188] PHP Warning:  include(): Failed opening 'no_existe.php' for inclusion (include_path='.:/usr/share/php:/usr/share/pear') in /var/www/html/prueba3.php on line 3
+[Mon Oct 23 10:43:46.017537 2017] [:error] [pid 5868] [client 192.168.60.1:12266] PHP Parse error:  syntax error, unexpected '{', expecting variable (T_VARIABLE) in /var/www/html/prueba4.php on line 2
+[Mon Oct 23 10:46:47.640101 2017] [:error] [pid 5863] [client 192.168.60.1:12355] PHP Deprecated:  Function split() is deprecated in /var/www/html/prueba.php on line 5
+[Mon Oct 23 10:46:48.517628 2017] [:error] [pid 5864] [client 192.168.60.1:12358] PHP Deprecated:  Function ereg() is deprecated in /var/www/html/prueba.php on line 5
