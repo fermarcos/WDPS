@@ -67,6 +67,9 @@ def addOptions():
     parser.add_option('--postgresql-log', dest='postgresql_log', default=None, help='Postgresql log file to analyze. If present, won\'t use any file specified in the configuration.')
     parser.add_option('--mysql-log', dest='mysql_log', default=None, help='Mysql log file to analyze. If present, won\'t use any file specified in the configuration.')
     parser.add_option('--ssh-log', dest='ssh_log', default=None, help='SSH log file to analyze. If present, won\'t use any file specified in the configuration.')
+    parser.add_option('--php-log', dest='php_log', default=None, help='PHP log file to analyze. If present, won\'t use any file specified in the configuration.')
+    parser.add_option('--ftp-log', dest='ftp_log', default=None, help='FTP log file to analyze. If present, won\'t use any file specified in the configuration.')
+    parser.add_option('--mail-log', dest='mail_log', default=None, help='Mail log file to analyze. If present, won\'t use any file specified in the configuration.')
     parser.add_option('--rot-max', dest='rot_max', default=None, help='Max number of rotated files to analyze.')
     parser.add_option('--rot-compressed', dest='compressed', default=None, action="store_true", help='If indicated, means that rotated logs are compressed.')
     parser.add_option('-g','--graph', dest='graph', default=None, action="store_true", help='If indicated, the results will be graphed')
@@ -75,7 +78,7 @@ def addOptions():
     parser.add_option('-r','--log-rotated', dest='rotated', default=None, action="store_true", help='If indicated, will look for rotated logs.')
     parser.add_option('-c','--config-file', dest='config', default=None, help='Configuration file for the script.')
     parser.add_option('-a','--attack-type', dest='attacks', default=None, help='Attack types to detect. [lfi,rfi,sqli,xss,csrf,dt,bf,craw]')
-    parser.add_option('-s','--services', dest='services', default=None, help='Services to analyze. [apache,nginx,postgresql,mysql,ssh]')
+    parser.add_option('-s','--services', dest='services', default=None, help='Services to analyze. [apache,nginx,postgresql,mysql,ssh,php,ftp,mail]')
     opts,args = parser.parse_args()
     return opts
 
@@ -96,17 +99,17 @@ def checkOptions(opts):
 
     if opts.services is not None:
         for service in opts.services.split(','):
-            if service not in ['apache','nginx','postgresql','mysql','ssh']:
-                printError('Could not understand the service %s. Try using: apache, nginx, postgresql, mysql or ssh' % service, True)
+            if service not in ['apache','nginx','postgresql','mysql','ssh','php','ftp','mail']:
+                printError('Could not understand the service %s. Try using: apache, nginx, postgresql, mysql, ssh, php, ftp, mail' % service, True)
 
 
 
 #Reads and parses the configuration file
 def readConfigFile(config):
     #These are the dictionaries used to store the info from the config file
-    log_conf = {'apache_log':[], 'nginx_log':[], 'postgresql_log':[], 'mysql_log':[], 'ssh_log':[]}
+    log_conf = {'apache_log':[], 'nginx_log':[], 'postgresql_log':[], 'mysql_log':[], 'ssh_log':[], 'php_log':[],'ftp_log':[], 'mail_log':[]}
     rules = {'rfi_rule':[], 'lfi_rule':[], 'sqli_rule':[], 'xss_rule':[], 'csrf_rule':[], 'dt_rule':[], 'crawler_rule':[], 'bf_seconds':'', 'bf_tries':''}
-    exec_conf = {'rfi': '', 'lfi':'', 'sqli':'', 'xss':'', 'csrf':'', 'dt':'', 'bf':'', 'craw':'', 'apache':'', 'nginx':'', 'mysql':'', 'ssh':'', 'postgresql':'', 'graph':'', 'verbose':'', 'output':''}
+    exec_conf = {'rfi': '', 'lfi':'', 'sqli':'', 'xss':'', 'csrf':'', 'dt':'', 'bf':'', 'craw':'', 'apache':'', 'nginx':'', 'mysql':'', 'ssh':'', 'php':'', 'ftp':'', 'mail':'', 'postgresql':'', 'graph':'', 'verbose':'', 'output':''}
     rot_conf = {'rotated':'', 'compressed':'', 'rot_ext':'', 'rot_max':''}
 
     with open(config,"r") as c:
@@ -177,6 +180,9 @@ def checkServices(distro):
     if 'nginx' in proc: services.append('nginx')
     if 'mysql' in proc or 'mariadb' in proc: services.append('mysql')
     if 'ssh' in proc: services.append('ssh')
+    if 'ftp' in proc: services.append('tfp')
+    if 'php' in proc: services.append('php')
+    if 'mail' in proc: services.append('mail')
     if 'postgresql' in proc: services.append('postgresql')
     return services
 
@@ -202,7 +208,7 @@ def setFinalExecConf(exec_conf, cmd_opts):
         for attack in available_attacks:
             exec_conf[attack] = True if attack in cmd_opts.attacks.split(',') else False
 
-    available_services = ['apache','nginx','postgresql','mysql','ssh']
+    available_services = ['apache','nginx','postgresql','mysql','ssh','php','ftp','mail']
     if cmd_opts.services is not None:
         for service in available_services:
             exec_conf[service] = True if service in cmd_opts.services.split(',') else False
@@ -257,6 +263,12 @@ def setFinalLogConf(log_conf, cmd_opts):
         log_conf['mysql_log'] = cmd_opts.mysql_log.split(',')
     if cmd_opts.ssh_log is not None:
         log_conf['ssh_log'] = cmd_opts.ssh_log.split(',')
+    if cmd_opts.ssh_log is not None:
+        log_conf['ftp_log'] = cmd_opts.ftp_log.split(',')
+    if cmd_opts.ftp_log is not None:
+        log_conf['php_log'] = cmd_opts.php_log.split(',')
+    if cmd_opts.mail_log is not None:
+        log_conf['mail_log'] = cmd_opts.mail_log.split(',')
     return log_conf
 
 
@@ -320,7 +332,15 @@ def determineBfAttack(seconds, tries):
 #Detects if the request corresponds to an attack
 def findAttack(attack_rules, reg, log_type):
     if log_type == 'ssh_log':
-        print "Analyzing SSH"
+        #print "Analyzing SSH"
+        if "Accepted password for" in reg.group('request'):
+            print reg.group('request')
+    if log_type == 'php_log':
+        print "Analyzing PHP"
+    if log_type == 'ftp_log':
+        print "Analyzing FTP"
+    if log_type == 'mail_log':
+        print "Analyzing mail"
     else:
         url_decod = {}
         if reg.group('code') == "404": bruteForce[(reg.group('code'),reg.group('request'))] = bruteForce.get((reg.group('code'),reg.group('request')) , 0) + 1
@@ -365,7 +385,11 @@ def parseLine(log_type, line, attack_rules):
     log_regex = { 'apache_log':r'(?P<ip>^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]))[\s\-]+\[(?P<date>[^\s]+)[^\"]+\"(?P<method>[^\s]+)\s+(?P<request>[^\s]+)\s+[^\"]+\"\s(?P<code>\w+)[^\"]+\"(?P<name>[^\"]+)\"\s+\"(?P<agent>[^\"]+)',
             'nginx_log':r'(?P<ip>^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]))[\s\-]+\[(?P<date>[^\s]+)[^\"]+\"(?P<method>[^\s]+)\s+(?P<request>[^\s]+)\s+[^\"]+\"\s(?P<code>\w+)[^\"]+\"(?P<name>[^\"]+)\"\s+\"(?P<agent>[^\"]+)',
             'postgresql_log':r'^(?P<date>[^\s]+\s[^\s]+)[^\[]+\[[^\s]+\s(?P<request>[^\s]+)\s(?P<code>[^:]+):[^\"]+\"(?P<ip>(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])).+$',
-            'ssh_log':r'(?P<date>^[A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2}) (?P<code>[a-z]+) (?P<request>.*)'
+            'ssh_log':r'(?P<date>^[A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2}) (?P<code>[a-z]+) (?P<request>.*)',
+            'php_log':r'.*',
+            'ftp_log':r'.*',
+            'mail_log':r'.*'
+
 }
     reg = re.match(log_regex[log_type], line)
 
@@ -467,7 +491,7 @@ def reportResults(service, attacks_conf, output, graph):
 #Opens the file depending on the selected configuration
 def filterAnalysis(opts, logs, rules, rot_conf):
 #    installed_services = checkServices(checkDistro())
-    services = filter(lambda x: opts[x], ['apache','nginx','postgresql','mysql','ssh'])
+    services = filter(lambda x: opts[x], ['apache','nginx','postgresql','mysql','ssh','php','ftp','mail'])
     f_attacks = filter(lambda x: opts[x], ['rfi','lfi','sqli','xss','csrf','dt','bf','craw'])
     graph_attacks = []
     attack_rules = {}
@@ -508,7 +532,15 @@ def filterAnalysis(opts, logs, rules, rot_conf):
         checkLogFiles(logs['ssh_log'])
         openLogs('ssh_log', logs['ssh_log'], attack_rules, rot_conf)
 #        reportResults('mysql', f_attacks, opts['output'], opts['graph'])
-
+    if 'php' in services:
+        checkLogFiles(logs['php_log'])
+        openLogs('php_log', logs['php_log'], attack_rules, rot_conf)
+    if 'ftp' in services:
+        checkLogFiles(logs['ftp_log'])
+        openLogs('ftp_log', logs['ftp_log'], attack_rules, rot_conf)
+    if 'mail' in services:
+        checkLogFiles(logs['mail_log'])
+        openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
 
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
