@@ -1,0 +1,14 @@
+server {
+	listen 2293;
+
+	root /var/www/estadisticas/webalizer/webalizer.SITIO;
+	index index.html;
+
+	server_name webalizer.SITIO.com;
+
+	auth_basic "Introduzca su usuario y contraseña";
+	auth_basic_user_file /etc/nginx/auth_users_webalizer;
+	
+	access_log /var/www/estadisticas/webalizer/access.log;
+	error_log /var/www/estadisticas/webalizer/error.log;
+}
