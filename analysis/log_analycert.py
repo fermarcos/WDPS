@@ -47,18 +47,38 @@ a_dict = {'xss':'Cross-Site Scripting',
 #This dictionary will hold all the events in determined interval. They time will be the key and the value a list of Bfrecord objects
 bf_attacks = {}
 
+#Class to manage the color for printing.
+class color:
+    Red='\033[0;31m'          # Red
+    Green='\033[0;32m'        # Green
+    Yellow='\033[0;33m'       # Yellow
+    Purple='\033[0;35m'       # Purple
+    Cyan='\033[0;36m'         # Cyan
+    Color_off = '\033[0m'
+    Cold = '\033[1m'
+    Underline = '\033[4m'
+
 #Class to manage each record in the php log file.
 class phpLog(object):
-    def __init__(self, c_error, ip_client, desc, date, archivo):
+    def __init__(self, c_error, ip_client, desc, date, file_ref):
     	self.c_error = c_error
     	self.ip_client = ip_client
     	self.desc = desc
     	self.date = date
-    	self.archivo = archivo
+    	self.file_ref = file_ref
     def __str__(self):
-        return '[%s] [%s] [%s] [%s] [%s] \n' % (self.c_error, self.ip_client, self.desc, self.date, self.archivo)
+        return '[%s] [%s] [%s] [%s] [%s] \n' % (self.c_error, self.ip_client, self.desc, self.date, self.file_ref)
 
-#r_php = phpLog()
+#Class to manage each record in the ftp log file.
+class ftpLog(object):
+    def _init_(self, state, ip_client, user, date, file_ref):
+    	self.state = state
+    	self.ip_client = ip_client
+    	self.user = user
+    	self.date = date
+    	self.file_ref = file_ref
+    def __str__(self):
+        return '[%s] [%s] [%s] [%s] [%s] \n' % (self.state, self.ip_client, self.user, self.date, self.file_ref)
 
 
 #Class to manage each record in the web log files. If it's consider an attack, will saved using this class.
@@ -362,7 +382,6 @@ def findAttack(attack_rules, reg, log_type):
     elif log_type == 'mail_log':
         print "Analyzing mail"
     else:
-        print log_type
         url_decod = {}
         if reg.group('code') == "404": bruteForce[(reg.group('code'),reg.group('request'))] = bruteForce.get((reg.group('code'),reg.group('request')) , 0) + 1
         global bf_attacks
@@ -462,21 +481,21 @@ def analyzePhpLogs(log_file):
 
                 date = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
                 desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
-                archivo = re.search(r'( in )(.+)',line).group(2)
+                file_ref = re.search(r'( in )(.+)',line).group(2)
 
-                php_obj = phpLog(c_error, '', desc, date, archivo)
+                php_obj = phpLog(c_error, '', desc, date, file_ref)
 
                 detected_php_info.append(php_obj)
 
 #Opens the log files depending on the service and the rotation configurations
 def openLogs(log_type, logs, attack_rules, rot_conf):
     for log in logs:
-        print "Analyzing "+log
+        print color.Cyan+"Analyzing "+log+color.Color_off
         readLog(log_type, log, attack_rules)
         if rot_conf['rotated']:
             rot_logs = getRotatedLogs(log, rot_conf['rot_ext'], rot_conf['rot_max'], 1, []) #Gets a list of the existing rotated logs
             for r_log in rot_logs:
-                print "Analyzing "+r_log
+                print color.Cyan+"Analyzing "+r_log+color.Color_off
                 readLog(log_type, r_log, attack_rules, rot_conf['compressed'])
 
 
@@ -499,15 +518,16 @@ def reportResults(service, attacks_conf, output, graph):
         evd.write('\nStart time: %s\n' % start_time)
         evd.write('End time: %s\n' % datetime.utcnow())
         evd.write('Events parsed: %s\n' % lines)
-        if service == 'php_log':
+        if service == 'php':
             evd.write('_'*50+'\n\nPHP Errors:\t\tDate:\t\t\t\tFile:\t\t\t\t\tDescription:\n')
             for l in detected_php_info:
-                evd.write('%s %s %s %s\n' % (l.c_error,'     \t'+l.date,'\t'+l.archivo ,'\t'+l.desc))
+                evd.write('%s %s %s %s\n' % (l.c_error,'     \t'+l.date,'\t'+l.file_ref ,'\t'+l.desc))
             out.write('_'*50+'\n\n')
             out.write('Fatal Error:%s \nWarnings: %s\nNotices: %s\nParse Errors: %s\nDeprecated Functions: %s\n' % ('\t\t'+str(error_fatal),'\t\t'+str(error_warning),'\t\t'+str(error_notice),'\t\t'+str(error_parse),'\t'+str(error_deprecated)))
 
-
-        if service == 'apache_log' or service == 'nginx_log':
+        #If the service selected is apache or nginx will create the report with
+        #the attacks found.
+        if service == 'apache' or service == 'nginx':
             evd.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
             for a in attacks_conf:
                 attack_filter = filter(lambda x: x.attack == a, detected_attacks)
@@ -544,6 +564,16 @@ def reportResults(service, attacks_conf, output, graph):
                 out.write('\n\tTop 10 response codes:\n')
                 for code in top_codes[:10]:
                     out.write('\t\t%s:\t%s\n' % (code, code_times[code]))
+
+            top = sorted(bruteForce, key =bruteForce.get, reverse = True )
+            print "\nRequests per minute to the same resource by the same ip\n"
+            for x in top[:10]:
+                print "\tCode: "+x[0]+ "   \tTimes: "+str(bruteForce[x])+"  \tRequest: "+x[1]
+
+            top = sorted(crawlers, key =crawlers.get, reverse = True )
+            print "\nRequests by crawlers\n"
+            for x in top[:10]:
+                print "\tTimes: "+str(crawlers[x])+"  \tAgent: "+x
 
     lines = 0
     detected_attacks = []
@@ -598,18 +628,18 @@ def filterAnalysis(opts, logs, rules, rot_conf):
 
     if 'ssh' in services:
         checkLogFiles(logs['ssh_log'])
-        openLogs('ssh_log', logs['ssh_log'], attack_rules, rot_conf)
+        openLogs('ssh', logs['ssh_log'], attack_rules, rot_conf)
 #        reportResults('mysql', f_attacks, opts['output'], opts['graph'])
     if 'php' in services:
         checkLogFiles(logs['php_log'])
         openLogs('php_log', logs['php_log'], attack_rules, rot_conf)
-        reportResults('php_log', f_attacks, opts['output'], opts['graph'])
+        reportResults('php', f_attacks, opts['output'], opts['graph'])
     if 'ftp' in services:
         checkLogFiles(logs['ftp_log'])
-        openLogs('ftp_log', logs['ftp_log'], attack_rules, rot_conf)
+        openLogs('ftp', logs['ftp_log'], attack_rules, rot_conf)
     if 'mail' in services:
         checkLogFiles(logs['mail_log'])
-        openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
+        openLogs('mail', logs['mail_log'], attack_rules, rot_conf)
 
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
@@ -632,15 +662,6 @@ if __name__ == '__main__':
     rot_conf = setFinalRotConf(rot_conf, cmd_opts)
     filterAnalysis(exec_conf, log_conf, rules, rot_conf)
     writeIPToFile(exec_conf['output'])
-#    print bruteForce
-    top = sorted(bruteForce, key =bruteForce.get, reverse = True )
-    print "\nRequests per minute to the same resource by the same ip\n"
-    for x in top[:10]:
-        print "\tCode: "+x[0]+ "   \tTimes: "+str(bruteForce[x])+"  \tRequest: "+x[1]
 
-    top = sorted(crawlers, key =crawlers.get, reverse = True )
-    print "\nRequests by crawlers\n"
-    for x in top[:10]:
-        print "\tTimes: "+str(crawlers[x])+"  \tAgent: "+x
 #    except IOError:
 #        printError('Unknown error', True)
