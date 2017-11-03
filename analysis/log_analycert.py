@@ -49,14 +49,14 @@ bf_attacks = {}
 
 #Class to manage each record in the php log file.
 class phpLog(object):
-    def __init__(self, c_error, ip_client, desc, fecha, archivo):
+    def __init__(self, c_error, ip_client, desc, date, archivo):
     	self.c_error = c_error
     	self.ip_client = ip_client
     	self.desc = desc
-    	self.fecha = fecha
+    	self.date = date
     	self.archivo = archivo
     def __str__(self):
-        return '[%s] [%s] [%s] [%s] [%s] \n' % (self.c_error, self.ip_client, self.desc, self.fecha, self.archivo)
+        return '[%s] [%s] [%s] [%s] [%s] \n' % (self.c_error, self.ip_client, self.desc, self.date, self.archivo)
 
 #r_php = phpLog()
 
@@ -441,17 +441,13 @@ def analyzePhpLogs(log_file):
     global error_warning
     global error_notice
     global error_deprecated
-
     global lines
-
-    file_reporte = open("reporte-php.txt","w")
 
     for line in log_file.readlines():
         lines += 1
         if re.search("error",line) is not None:
             err = re.search('PHP ([a-zA-Z]+)( [a-zA-Z]+)?', line)
             if err is not None:
-#                r_php.c_error = err.group(0)
                 c_error = err.group(0)
                 if re.search("Fatal", c_error):
                     error_fatal += 1
@@ -463,22 +459,14 @@ def analyzePhpLogs(log_file):
                 		error_notice += 1
                 if re.search("Deprecated", c_error):
                 	error_deprecated += 1
-#                r_php.fecha = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
-#                r_php.desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
-#                r_php.archivo = re.search(r'( in )(.+)',line).group(2)
-                fecha = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
+
+                date = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
                 desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
                 archivo = re.search(r'( in )(.+)',line).group(2)
 
-                php_obj = phpLog(c_error, '', desc, fecha, archivo)
+                php_obj = phpLog(c_error, '', desc, date, archivo)
 
                 detected_php_info.append(php_obj)
-
-#                file_reporte.write(r_php.c_error + "\t"  + r_php.fecha + "   " + r_php.desc + "\t" + r_php.archivo + "\n")
-
-#    print "\nError faltal: " + str(error_fatal) + "\nWarning: "  + str(error_warning) + "\nNotice: " + str(error_notice)  + "\nParse error: "+ str(error_parse) +"\nFunction deprecated: " + str(error_deprecated)
-    file_reporte.close
-
 
 #Opens the log files depending on the service and the rotation configurations
 def openLogs(log_type, logs, attack_rules, rot_conf):
@@ -500,7 +488,7 @@ def reportResults(service, attacks_conf, output, graph):
     global ips
     labels = []
     values = []
-    #for p in detected_attacks: print p #debug
+
     with open(output, 'a') as out, open(output+'.ev','a') as evd:
         out.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
         out.write('\nStart time: %s\n' % start_time)
@@ -514,11 +502,9 @@ def reportResults(service, attacks_conf, output, graph):
         if service == 'php_log':
             evd.write('_'*50+'\n\nPHP Errors:\t\tDate:\t\t\t\tFile:\t\t\t\t\tDescription:\n')
             for l in detected_php_info:
-                evd.write('%s %s %s %s\n' % (l.c_error,'     \t'+l.fecha,'\t'+l.archivo ,'\t'+l.desc))
+                evd.write('%s %s %s %s\n' % (l.c_error,'     \t'+l.date,'\t'+l.archivo ,'\t'+l.desc))
             out.write('_'*50+'\n\n')
             out.write('Fatal Error:%s \nWarnings: %s\nNotices: %s\nParse Errors: %s\nDeprecated Functions: %s\n' % ('\t\t'+str(error_fatal),'\t\t'+str(error_warning),'\t\t'+str(error_notice),'\t\t'+str(error_parse),'\t'+str(error_deprecated)))
-#            print "\nError faltal: " + str(error_fatal) + "\nWarning: "  + str(error_warning) + "\nNotice: " + str(error_notice)  + "\nParse error: "+ str(error_parse) +"\nFunction deprecated: " + str(error_deprecated)
-#        file_reporte.write(r_php.c_error + "\t"  + r_php.fecha + "   " + r_php.desc + "\t" + r_php.archivo + "\n")
 
 
         if service == 'apache_log' or service == 'nginx_log':
