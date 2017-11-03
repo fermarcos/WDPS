@@ -27,6 +27,11 @@
 	AWSTATS_APACHE_CONF="`pwd`/../templates/site_awstats_apache.conf"
 	TEMPLATES="`pwd`/../templates"
 	AWSTATS_URL="`pwd`/../awstats_url"
+	
+	LOG_NGINX="/var/log/nginx/"
+	SITES_NGINX="/etc/nginx/sites-available"
+	AWSTATS_NGINX_CONF="`pwd`/../templates/site_awstats_nginx_du"
+	
 #==========================================#
 
 
@@ -80,12 +85,14 @@ exec_cmd()
 #####################################################################################################
 install_aws()
 {
-	dpkg --get-selections | grep -w apache2 | grep -w install
+	apache -v 2> /dev/null
+	#dpkg --get-selections | grep -w apache2 | grep -w install
 	apache=$?
-	dpkg --get-selections | grep -w nginx | grep -w install
+	nginx -v 2> /dev/null
+	#dpkg --get-selections | grep -w nginx | grep -w install
 	nginx=$?
 	
-	if [[ "$apache" == 256 || "$nginx" == 256 ]]; then
+	if [[ "$apache" == 127 && "$nginx" == 127 ]]; then
 			print "You don't have install a web server (Apache o Nginx)"
 			exit 1
 	fi
@@ -108,9 +115,11 @@ install_aws()
 #####################################################################################################
 configure_aws()
 {
-	dpkg --get-selections | grep -w apache2 | grep -w install
+	apache -v 2> /dev/null
+	#dpkg --get-selections | grep -w apache2 | grep -w install
 	apache=$?
-	dpkg --get-selections | grep -w nginx | grep -w install
+	nginx -v 2> /dev/null
+	#dpkg --get-selections | grep -w nginx | grep -w install
 	nginx=$?
 	#httpd=
 		
@@ -125,7 +134,7 @@ configure_aws()
 configure_aws_apache()
 {
 	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
-		echo "[`date +"%F %X"`] - [AWStats_install | INSTALL_AWSTATS]   Configuring AWStats " >> $LOG
+		echo "[`date +"%F %X"`] - [AWStats_install | CONFIGURE_AWSTATS]   Configuring AWStats " >> $LOG
 		echo "Sitio 	URL" >> $AWSTATS_URL
 		echo " "			 >> $AWSTATS_URL	
 						
@@ -187,8 +196,6 @@ configure_aws_apache()
 				$cmd
 				exec_cmd $? "CONFIGURE APACHE $cmd"
 				
-				echo "awstats.$sitio.com"
-				
 				echo "* * * * * root /usr/lib/cgi-bin/awstats.pl -config=$sitio -update -output > /var/www/estadisticas/awstats/awstats.$sitio/awstats.$sitio.html" >> /etc/crontab
 				
 				echo "127.0.0.1 awstats.$sitio.com" >> /etc/hosts
@@ -225,7 +232,91 @@ configure_aws_apache()
 #####################################################################################################
 configure_aws_nginx()
 {
-		echo "hola"
+	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
+		echo "[`date +"%F %X"`] - [AWStats_install | CONFIGURE_AWSTATS]   Configuring AWStats " >> $LOG
+		echo -e "\nAwstats for nginx\n\nSitio 	URL\n" >> $AWSTATS_URL
+						
+		cmd="unzip -d $TEMPLATES/ $TEMPLATES/awstats_dir.zip"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+		
+		cmd="cd $LOG_NGINX"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"		
+
+		num_logs=`ls *access*log | wc -l`
+		count=0
+				
+		while  [ $count -lt $num_logs ]; do
+				let count=count+1
+				sitio=`ls -1 *access*log | sed -n $count'p'`
+
+				
+				# Copia del archivo de configuracion  awstats.conf
+				
+				cmd="cp /etc/awstats/awstats.conf /etc/awstats/awstats.$sitio.conf"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				config_file=/etc/awstats/awstats.$sitio.conf				
+				cmd="sed -i s/apache2\/access.log/nginx\/$sitio/g $config_file"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				cmd="sed -i s/SiteDomain=\"\"/SiteDomain=\"$sitio\"/g $config_file"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				cmd="mkdir -p /var/www/estadisticas/awstats/awstats.$sitio"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				/usr/lib/cgi-bin/awstats.pl -config=$sitio -update -output > /var/www/estadisticas/awstats/awstats.$sitio/awstats.$sitio.html
+				
+				cmd="cp -rf $TEMPLATES/awstats_dir/* /var/www/estadisticas/awstats/awstats.$sitio/"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				#----------- Configuracion Apache2 ---------
+				
+				cmd="cp $AWSTATS_NGINX_CONF $SITES_NGINX/awstats.$sitio"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				cmd="sed -i s/SITIO/$sitio/g $SITES_NGINX/awstats.$sitio"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				cmd="ln -s $SITES_NGINX/awstats.$sitio /etc/nginx/sites-enabled/awstats.$sitio"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"	
+				
+				echo "* * * * * root /usr/lib/cgi-bin/awstats.pl -config=$sitio -update -output > /var/www/estadisticas/awstats/awstats.$sitio/awstats.$sitio.html" >> /etc/crontab
+				
+				echo "127.0.0.1 awstats.$sitio.com" >> /etc/hosts
+				
+				echo "$sitio -> awstats.$sitio.com:2292" >> $AWSTATS_URL 
+				
+				cmd="cd $LOG_NGINX"
+				$cmd
+				exec_cmd $? "CONFIGURE NGINX $cmd"		
+				
+		done
+		
+		echo "Usuario para acceder a estadisticas: " >> $LOG			
+		echo "Usuario para acceder a estadisticas: "
+		
+		cmd="read us"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+		
+		cmd="htpasswd -c /etc/nginx/auth_users_awstats $us"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+		
+		service nginx restart
+		
+	fi
 }
 #####################################################################################################
 banner_log()
