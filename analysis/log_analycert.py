@@ -444,15 +444,92 @@ def readLog(log_type, log, attack_rules, compressed = False):
     if compressed and log.endswith("gz"):
         with gzip.open(log, 'r') as i:
             if log_type == 'php_log': analyzePhpLogs(i)
+            if log_type == 'ftp_log': analyzeFtpLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
     else:
         with open(log, 'r') as i:
             if log_type == 'php_log': analyzePhpLogs(i)
+            if log_type == 'ftp_log': analyzeFtpLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
 
 
+def analyzeFtpLogs(log_file):
+    cliente_IP = []
+    linea_ftp = []
+    upload = 0
+    download  = 0
+    login_exitoso = 0
+    login_fallido = 0
+    failed = []
+
+    file_reporte = open ("reporte_FTP.txt","w")
+    file_failed = open ("failed.txt","w")
+    print "\nAnalizando error y funciones obsoletas FTP"
+
+    for line in log_file.readlines():
+        state = ' '.join(line.split()[8:10]).strip(":")
+        if not re.search ("Client",state):
+            linea_ftp.append(line)
+            cliente_IP.append(re.search(r'(\d{1,3}\.){3}\d{1,3}',line).group(0))
+            if re.search("OK UPLOAD",state):
+                upload +=  1
+            if re.search ("OK DOWNLOAD",state):
+                download +=  1
+            if re.search("OK LOGIN",state):
+                login_exitoso +=1
+            if re.search("FAIL LOGIN",state):
+                login_fallido +=  1
+                file_failed.write(line)
+
+    file_failed = open ("failed.txt")
+    proc1=subprocess.Popen(['cut','-d',' ','-f','1-4'],stdin=file_failed,stdout=subprocess.PIPE)
+    file_failed.close
+    proc2=subprocess.Popen(['cut','-d',':','-f','1,2'],stdin=proc1.stdout,stdout=subprocess.PIPE)
+    proc3=subprocess.Popen(['uniq','-c'],stdin=proc2.stdout,stdout=subprocess.PIPE)
+
+    (a,err)=proc3.communicate()
+
+    brute = a.split("\n")
+    brute.pop()
+
+
+    f_bruta = 0
+    print "\n -------------------------------- "
+    print " ----- Ataques de Fuerza bruta --- \n"
+    print " Num.\Date \n"
+    for b in brute:
+        if int(b.split()[0]) > 4:
+            f_bruta += 1
+            print b
+            print "\n\n -- Ataques ( +5 eventos / minuto): " + str(f_bruta) + "\n\n"
+
+
+    file_reporte.write("-------- REPORTE FTP ---------\n\n\n")
+    cliente_IP =  set(cliente_IP)
+
+    for client in cliente_IP :
+    	file_reporte.write("\n ----------- DIRECCION IP ORIGEN  -- " + client + "\n\n")
+    	for line in linea_ftp:
+    		if re.search(client,line):
+    			state = ' '.join(line.split()[8:10]).strip(":")
+    			file_ref = " "
+    			user = (line.split()[7]).strip("[").strip("]")
+    			date = ' '.join(line.split()[0:5])
+    			if re.search("UPLOAD",state) or re.search("DOWNLOAD",state) :
+    				file_ref = line.split(",")[1]
+
+    			file_reporte.write(date + "\t" + state + "\t" + user + "\t" + file_ref + "\n")
+
+    file_reporte.close
+    print "+- Uploaded files: " + str(upload) + "\n+- Downloaded files: " + str(download) + "\n+- Succesful logins: " + str(login_exitoso) + "\n+- Failed logins: " + str(login_fallido) + "\n\n\n"
+
+
+
+
+
+#Analyze each line of the php log to find the errors
 def analyzePhpLogs(log_file):
 
     global error_fatal
@@ -636,10 +713,10 @@ def filterAnalysis(opts, logs, rules, rot_conf):
         reportResults('php', f_attacks, opts['output'], opts['graph'])
     if 'ftp' in services:
         checkLogFiles(logs['ftp_log'])
-        openLogs('ftp', logs['ftp_log'], attack_rules, rot_conf)
+        openLogs('ftp_log', logs['ftp_log'], attack_rules, rot_conf)
     if 'mail' in services:
         checkLogFiles(logs['mail_log'])
-        openLogs('mail', logs['mail_log'], attack_rules, rot_conf)
+        openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
 
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
