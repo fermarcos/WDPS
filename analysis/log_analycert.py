@@ -20,6 +20,21 @@ import plotly
 import plotly.graph_objs as go
 
 
+#variables to count in mail logs
+count_mail = 0
+count_e_fatal = 0
+count_e_warning = 0
+count_e_error = 0
+count_e_panic = 0
+count_send = 0
+count_received = 0
+count_rejected = 0
+count_inSysStorage = 0
+count_connections = 0
+dest_dict = dict()
+ip_dict = dict()
+
+#Variables to count errors in php logs
 error_fatal = 0
 error_parse = 0
 error_warning = 0
@@ -445,14 +460,112 @@ def readLog(log_type, log, attack_rules, compressed = False):
         with gzip.open(log, 'r') as i:
             if log_type == 'php_log': analyzePhpLogs(i)
             if log_type == 'ftp_log': analyzeFtpLogs(i)
+            if log_type == 'mail_log': analyzeMailLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
     else:
         with open(log, 'r') as i:
             if log_type == 'php_log': analyzePhpLogs(i)
             if log_type == 'ftp_log': analyzeFtpLogs(i)
+            if log_type == 'mail_log': analyzeMailLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
+
+
+def analyzeMailLogs(log_file):
+    e_fatal = []
+    e_warning = []
+    e_error = []
+    e_panic = []
+    destinatarios = []
+    remitentes = []
+    remitentes_rej = []
+    ip_connections = []
+
+    global lines
+    global count_mail
+    global count_e_fatal
+    global count_e_warning
+    global count_e_error
+    global count_e_panic
+    global count_send
+    global count_received
+    global count_rejected
+    global count_inSysStorage
+    global count_connections
+    global dest_dict
+    global ip_dict
+
+    reporte = open("reporte_mail.txt","w")
+
+    for line in log_file.readlines():
+        lines = lines +1
+        if re.search("postfix",line):
+            if re.search("fatal: ",line):
+            	e_fatal.append(re.search("(fatal: )(.+)",line).group(2))
+            	count_e_fatal += 1
+            if re.search("warning",line):
+            	e_warning.append(re.search("(warning: )(.+)",line).group(2))
+            	count_e_warning += 1
+            if re.search("error: ",line):
+            	e_error.append(re.search("(error: )(.+)",line).group(2))
+            	count_e_error += 1
+            if re.search("panic: ",line):
+            	e_panic.append(re.search("(panic: )(.+)",line).group(2))
+            	count_e_panic += 1
+            if re.search("smtpd.+connect from",line):
+                ip_connections.append(re.search("(connect from.+\[)(.+)(\])",line).group(2))
+                count_connections += 1
+                ip_conn = re.search("(connect from.+\[)(.+)(\])",line).group(2)
+                if ip_conn  is not None: ip_dict[ip_conn] = ip_dict.get(ip_conn , 0) + 1
+            if re.search("smtp.+sent",line):
+                destinatarios.append(re.search("(to=<)(.+)(>,)",line).group(2))
+                count_send += 1
+                destino = re.search("(to=<)(.+)(>,)",line).group(2)
+                if destino  is not None: dest_dict[destino] = dest_dict.get(destino , 0) + 1
+            if re.search("relay=local.+status=sent",line):
+            	count_received += 1
+            if re.search("qmgr.+from=<",line):
+            	remitentes.append(re.search("(from=<)(.+)(>,)",line).group(2))
+            if re.search("reject",line):
+            	count_rejected += 1
+            	if re.search("from=<",line) is not None:
+            		remitentes_rej.append(re.search("(from=<)(.+)(> to=)",line).group(2))
+            if re.search("Insufficiented system storage",line):
+            	count_inSysStorage += 1
+
+    destinatarios = set(destinatarios)
+    remitentes = set(remitentes)
+    remitentes_rej = set(remitentes_rej)
+    ip_connections = set(ip_connections)
+
+
+
+
+    reporte.write("\n\n-------------------\n")
+    reporte.write(" ** IP conectadas **\n\n")
+    reporte.write("\n".join(ip_connections))
+    reporte.write("\n\n-------------------\n")
+    reporte.write(" ** Destinatarios **\n\n")
+    reporte.write("\n".join(destinatarios))
+    reporte.write("\n\n\n-------------------\n")
+    reporte.write(" ** Remitentes **\n\n")
+    reporte.write("\n".join(remitentes))
+    reporte.write("\n\n\n-------------------\n")
+    reporte.write(" ** Remitentes Rechazados**\n\n")
+    reporte.write("\n".join(remitentes_rej))
+    reporte.write("\n\n\n-------------------\n")
+    reporte.write("\n\n Error Fatal\n\n")
+    reporte.write("\n".join(e_fatal))
+    reporte.write("\n\n Warning\n\n")
+    reporte.write("\n".join(e_warning))
+    reporte.write("\n\n Error\n\n")
+    reporte.write("\n".join(e_error))
+    reporte.write("\n Panic\n\n")
+    reporte.write("\n".join(e_panic))
+    reporte.close
+
+
 
 
 def analyzeFtpLogs(log_file):
@@ -602,6 +715,24 @@ def reportResults(service, attacks_conf, output, graph):
             out.write('_'*50+'\n\n')
             out.write('Fatal Error:%s \nWarnings: %s\nNotices: %s\nParse Errors: %s\nDeprecated Functions: %s\n' % ('\t\t'+str(error_fatal),'\t\t'+str(error_warning),'\t\t'+str(error_notice),'\t\t'+str(error_parse),'\t'+str(error_deprecated)))
 
+        if service == 'mail':
+            out.write('_'*100+'\n\nGeneral information:\n\n')
+            out.write("\tConnections: %s\n" % ('\t'+str(count_connections)))
+            out.write("\tSent mails: %s\n" % ('\t'+str(count_send)))
+            out.write("\tReceived mails: %s\n" % (str(count_received)))
+            out.write("\tRejected mails: %s\n" % (str(count_rejected)))
+            out.write("\tFatal error: %s\n" % ('\t'+str(count_e_fatal)))
+            out.write("\tWarnings: %s\n" % ('\t'+str(count_e_warning)))
+            out.write("\tErrors: %s\n" % ('\t'+str(count_e_error)))
+            out.write("\tPanic: %s\n" % ('\t\t'+str(count_e_panic)))
+
+            out.write('_'*100+'\n\nRecipients:\n\n')
+            top = sorted(dest_dict, key =dest_dict.get, reverse = True )
+            for f in top: out.write("\tMail: %s Times: %s\n" % (f,'\t'+str(dest_dict[f])))
+            out.write('_'*100+'\n\nConnections:\n\n')
+            top = sorted(ip_dict, key =ip_dict.get, reverse = True )
+            for f in top: out.write("\tIP: %s Times: %s\n" % (f+'\t',str(ip_dict[f])))
+
         #If the service selected is apache or nginx will create the report with
         #the attacks found.
         if service == 'apache' or service == 'nginx':
@@ -643,15 +774,15 @@ def reportResults(service, attacks_conf, output, graph):
                     out.write('\t\t%s:\t%s\n' % (code, code_times[code]))
 
             top = sorted(bruteForce, key =bruteForce.get, reverse = True )
-            print "\nRequests per minute to the same resource by the same ip\n"
+            out.write('_'*50+'\n\n')
+            out.write("Requests per minute to the same resource by the same ip\n\n")
             for x in top[:10]:
-                print "\tCode: "+x[0]+ "   \tTimes: "+str(bruteForce[x])+"  \tRequest: "+x[1]
-
+                out.write('\tCode: %s Times: %s Request: %s\n' % (x[0]+'\t',str(bruteForce[x])+'\t',x[1]))
             top = sorted(crawlers, key =crawlers.get, reverse = True )
-            print "\nRequests by crawlers\n"
+            out.write('_'*50+'\n\n')
+            out.write("Requests by crawlers\n\n")
             for x in top[:10]:
-                print "\tTimes: "+str(crawlers[x])+"  \tAgent: "+x
-
+                out.write('\tTimes: %s Agent: %s\n' % (str(crawlers[x])+'\t',x))
     lines = 0
     detected_attacks = []
 
@@ -717,7 +848,7 @@ def filterAnalysis(opts, logs, rules, rot_conf):
     if 'mail' in services:
         checkLogFiles(logs['mail_log'])
         openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
-
+        reportResults('mail', f_attacks, opts['output'], opts['graph'])
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
     with open(output+'.ips', 'w') as o:
