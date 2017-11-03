@@ -85,7 +85,7 @@ exec_cmd()
 #####################################################################################################
 install_aws()
 {
-	apache -v 2> /dev/null
+	apache2 -v 2> /dev/null
 	#dpkg --get-selections | grep -w apache2 | grep -w install
 	apache=$?
 	nginx -v 2> /dev/null
@@ -93,7 +93,7 @@ install_aws()
 	nginx=$?
 	
 	if [[ "$apache" == 127 && "$nginx" == 127 ]]; then
-			print "You don't have install a web server (Apache o Nginx)"
+			echo "You don't have install a web server (Apache o Nginx)"
 			exit 1
 	fi
 	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
@@ -115,7 +115,7 @@ install_aws()
 #####################################################################################################
 configure_aws()
 {
-	apache -v 2> /dev/null
+	apache2 -v 2> /dev/null
 	#dpkg --get-selections | grep -w apache2 | grep -w install
 	apache=$?
 	nginx -v 2> /dev/null
