@@ -1,0 +1,14 @@
+server {
+	listen 2292;
+
+	root /var/www/estadisticas/awstats/awstats.SITIO;
+	index awstats.SITIO.html;
+
+	server_name awstats.SITIO.com;
+
+	auth_basic "Introduzca su usuario y contraseña";
+	auth_basic_user_file /etc/nginx/auth_users_awstats;
+	
+	access_log /var/www/estadisticas/awstats/access.log;
+	error_log /var/www/estadisticas/awstats/error.log;
+}
