@@ -6,7 +6,7 @@
 #Arrieta Jiménez Diana Laura
 
 import subprocess
-import sys
+import sys, os
 import optparse
 import os.path
 import gzip
@@ -19,12 +19,20 @@ from itertools import chain
 import plotly
 import plotly.graph_objs as go
 
+
+error_fatal = 0
+error_parse = 0
+error_warning = 0
+error_notice = 0
+error_deprecated = 0
+
 bruteForce = dict()
 crawlers = dict()
 ips = set()
 start_time = ''
 lines = 0
 detected_attacks = []
+detected_php_info = []
 verbose = ''
 a_dict = {'xss':'Cross-Site Scripting',
         'dt': 'Directory Transversal',
@@ -39,7 +47,21 @@ a_dict = {'xss':'Cross-Site Scripting',
 #This dictionary will hold all the events in determined interval. They time will be the key and the value a list of Bfrecord objects
 bf_attacks = {}
 
-#Class to manage each record in the log file. If it's consider an attack, will saved using this class.
+#Class to manage each record in the php log file.
+class phpLog(object):
+    def __init__(self, c_error, ip_client, desc, fecha, archivo):
+    	self.c_error = c_error
+    	self.ip_client = ip_client
+    	self.desc = desc
+    	self.fecha = fecha
+    	self.archivo = archivo
+    def __str__(self):
+        return '[%s] [%s] [%s] [%s] [%s] \n' % (self.c_error, self.ip_client, self.desc, self.fecha, self.archivo)
+
+#r_php = phpLog()
+
+
+#Class to manage each record in the web log files. If it's consider an attack, will saved using this class.
 #This class also works to save the records for BF analysis.
 class Attack(object):
     def __init__(self, attack, ip, date, request, code, agent):
@@ -327,21 +349,20 @@ def determineBfAttack(seconds, tries):
     return False
 
 
-
-
 #Detects if the request corresponds to an attack
 def findAttack(attack_rules, reg, log_type):
     if log_type == 'ssh_log':
         #print "Analyzing SSH"
         if "Accepted password for" in reg.group('request'):
             print reg.group('request')
-    if log_type == 'php_log':
+    elif log_type == 'php_log':
         print "Analyzing PHP"
-    if log_type == 'ftp_log':
+    elif log_type == 'ftp_log':
         print "Analyzing FTP"
-    if log_type == 'mail_log':
+    elif log_type == 'mail_log':
         print "Analyzing mail"
     else:
+        print log_type
         url_decod = {}
         if reg.group('code') == "404": bruteForce[(reg.group('code'),reg.group('request'))] = bruteForce.get((reg.group('code'),reg.group('request')) , 0) + 1
         global bf_attacks
@@ -403,12 +424,61 @@ def parseLine(log_type, line, attack_rules):
 def readLog(log_type, log, attack_rules, compressed = False):
     if compressed and log.endswith("gz"):
         with gzip.open(log, 'r') as i:
+            if log_type == 'php_log': analyzePhpLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
     else:
         with open(log, 'r') as i:
+            if log_type == 'php_log': analyzePhpLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
+
+
+def analyzePhpLogs(log_file):
+
+    global error_fatal
+    global error_parse
+    global error_warning
+    global error_notice
+    global error_deprecated
+
+    global lines
+
+    file_reporte = open("reporte-php.txt","w")
+
+    for line in log_file.readlines():
+        lines += 1
+        if re.search("error",line) is not None:
+            err = re.search('PHP ([a-zA-Z]+)( [a-zA-Z]+)?', line)
+            if err is not None:
+#                r_php.c_error = err.group(0)
+                c_error = err.group(0)
+                if re.search("Fatal", c_error):
+                    error_fatal += 1
+                if re.search("Parse", c_error):
+                	error_parse += 1
+                if re.search("Warning", c_error):
+                	error_warning += 1
+                if re.search("Notice", c_error):
+                		error_notice += 1
+                if re.search("Deprecated", c_error):
+                	error_deprecated += 1
+#                r_php.fecha = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
+#                r_php.desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
+#                r_php.archivo = re.search(r'( in )(.+)',line).group(2)
+                fecha = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
+                desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
+                archivo = re.search(r'( in )(.+)',line).group(2)
+
+                php_obj = phpLog(c_error, '', desc, fecha, archivo)
+
+                detected_php_info.append(php_obj)
+
+#                file_reporte.write(r_php.c_error + "\t"  + r_php.fecha + "   " + r_php.desc + "\t" + r_php.archivo + "\n")
+
+#    print "\nError faltal: " + str(error_fatal) + "\nWarning: "  + str(error_warning) + "\nNotice: " + str(error_notice)  + "\nParse error: "+ str(error_parse) +"\nFunction deprecated: " + str(error_deprecated)
+    file_reporte.close
+
 
 #Opens the log files depending on the service and the rotation configurations
 def openLogs(log_type, logs, attack_rules, rot_conf):
@@ -425,6 +495,7 @@ def openLogs(log_type, logs, attack_rules, rot_conf):
 #Reports the results that hve been found until the selected point
 def reportResults(service, attacks_conf, output, graph):
     global detected_attacks
+    global detected_php_info
     global lines
     global ips
     labels = []
@@ -435,51 +506,62 @@ def reportResults(service, attacks_conf, output, graph):
         out.write('\nStart time: %s\n' % start_time)
         out.write('End time: %s\n' % datetime.utcnow())
         out.write('Events parsed: %s\n' % lines)
-        out.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
+        if service == 'apache_log' or service == 'nginx_log': out.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
         evd.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
         evd.write('\nStart time: %s\n' % start_time)
         evd.write('End time: %s\n' % datetime.utcnow())
         evd.write('Events parsed: %s\n' % lines)
-        evd.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
-
-        for a in attacks_conf:
-            attack_filter = filter(lambda x: x.attack == a, detected_attacks)
+        if service == 'php_log':
+            evd.write('_'*50+'\n\nPHP Errors:\t\tDate:\t\t\t\tFile:\t\t\t\t\tDescription:\n')
+            for l in detected_php_info:
+                evd.write('%s %s %s %s\n' % (l.c_error,'     \t'+l.fecha,'\t'+l.archivo ,'\t'+l.desc))
             out.write('_'*50+'\n\n')
-            out.write('%s\n' % ( a_dict[a]))
-            out.write('Total attacks:\t%s\n' % str(len(attack_filter)))
-            evd.write('_'*50+'\n\n')
-            evd.write('%s\n' % ( a_dict[a]))
-            evd.write('Total attacks:\t%s\n' % str(len(attack_filter)))
+            out.write('Fatal Error:%s \nWarnings: %s\nNotices: %s\nParse Errors: %s\nDeprecated Functions: %s\n' % ('\t\t'+str(error_fatal),'\t\t'+str(error_warning),'\t\t'+str(error_notice),'\t\t'+str(error_parse),'\t'+str(error_deprecated)))
+#            print "\nError faltal: " + str(error_fatal) + "\nWarning: "  + str(error_warning) + "\nNotice: " + str(error_notice)  + "\nParse error: "+ str(error_parse) +"\nFunction deprecated: " + str(error_deprecated)
+#        file_reporte.write(r_php.c_error + "\t"  + r_php.fecha + "   " + r_php.desc + "\t" + r_php.archivo + "\n")
 
-            #The attacks will be graphed if the option is enabled.
-            if graph is True:
-                labels.append(a_dict[a])
-                values.append(len(attack_filter))
 
-            #Gets the top of IPs and response codes
-            ip_times = {}
-            code_times = {}
-            for af in attack_filter:
-                evd.write(str(af))
-                ips.add(af.ip) #Adds the ips to a set so finally a file with those IPs can be written
-                if af.ip in ip_times.keys(): ip_times[af.ip] += 1
-                else: ip_times[af.ip] = 1
+        if service == 'apache_log' or service == 'nginx_log':
+            evd.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
+            for a in attacks_conf:
+                attack_filter = filter(lambda x: x.attack == a, detected_attacks)
+                out.write('_'*50+'\n\n')
+                out.write('%s\n' % ( a_dict[a]))
+                out.write('Total attacks:\t%s\n' % str(len(attack_filter)))
+                evd.write('_'*50+'\n\n')
+                evd.write('%s\n' % ( a_dict[a]))
+                evd.write('Total attacks:\t%s\n' % str(len(attack_filter)))
 
-                if af.code in code_times.keys(): code_times[af.code] += 1
-                else: code_times[af.code] = 1
+                #The attacks will be graphed if the option is enabled.
+                if graph is True:
+                    labels.append(a_dict[a])
+                    values.append(len(attack_filter))
 
-            top_ips = sorted(ip_times, key =ip_times.get, reverse = True )
-            top_codes = sorted(code_times, key=code_times.get, reverse = True)
+                #Gets the top of IPs and response codes
+                ip_times = {}
+                code_times = {}
+                for af in attack_filter:
+                    evd.write(str(af))
+                    ips.add(af.ip) #Adds the ips to a set so finally a file with those IPs can be written
+                    if af.ip in ip_times.keys(): ip_times[af.ip] += 1
+                    else: ip_times[af.ip] = 1
 
-            out.write('\n\tTop 10 attacker IPv4 addresses:\n')
-            for ip in top_ips[:10]:
-                out.write('\t\t%s:\t%s\n' % (ip, ip_times[ip]))
-            out.write('\n\tTop 10 response codes:\n')
-            for code in top_codes[:10]:
-                out.write('\t\t%s:\t%s\n' % (code, code_times[code]))
+                    if af.code in code_times.keys(): code_times[af.code] += 1
+                    else: code_times[af.code] = 1
+
+                top_ips = sorted(ip_times, key =ip_times.get, reverse = True )
+                top_codes = sorted(code_times, key=code_times.get, reverse = True)
+
+                out.write('\n\tTop 10 attacker IPv4 addresses:\n')
+                for ip in top_ips[:10]:
+                    out.write('\t\t%s:\t%s\n' % (ip, ip_times[ip]))
+                out.write('\n\tTop 10 response codes:\n')
+                for code in top_codes[:10]:
+                    out.write('\t\t%s:\t%s\n' % (code, code_times[code]))
 
     lines = 0
     detected_attacks = []
+
 
     #The attacks will be graphed if the option is enabled.
     if graph is True:
@@ -535,6 +617,7 @@ def filterAnalysis(opts, logs, rules, rot_conf):
     if 'php' in services:
         checkLogFiles(logs['php_log'])
         openLogs('php_log', logs['php_log'], attack_rules, rot_conf)
+        reportResults('php_log', f_attacks, opts['output'], opts['graph'])
     if 'ftp' in services:
         checkLogFiles(logs['ftp_log'])
         openLogs('ftp_log', logs['ftp_log'], attack_rules, rot_conf)
