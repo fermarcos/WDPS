@@ -34,6 +34,11 @@ count_connections = 0
 dest_dict = dict()
 ip_dict = dict()
 
+
+#variables used to count in the postgresql logs
+failedTries = {}
+error_logs = {}
+error_lines = []
 #Variables to count errors in php logs
 error_fatal = 0
 error_parse = 0
@@ -461,6 +466,7 @@ def readLog(log_type, log, attack_rules, compressed = False):
             if log_type == 'php_log': analyzePhpLogs(i)
             if log_type == 'ftp_log': analyzeFtpLogs(i)
             if log_type == 'mail_log': analyzeMailLogs(i)
+            if log_type == 'postgresql_log': analyzePostgresLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
     else:
@@ -468,6 +474,7 @@ def readLog(log_type, log, attack_rules, compressed = False):
             if log_type == 'php_log': analyzePhpLogs(i)
             if log_type == 'ftp_log': analyzeFtpLogs(i)
             if log_type == 'mail_log': analyzeMailLogs(i)
+            if log_type == 'postgresql_log': analyzePostgresLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
 
@@ -639,7 +646,41 @@ def analyzeFtpLogs(log_file):
     print "+- Uploaded files: " + str(upload) + "\n+- Downloaded files: " + str(download) + "\n+- Succesful logins: " + str(login_exitoso) + "\n+- Failed logins: " + str(login_fallido) + "\n\n\n"
 
 
+def analyzePostgresLogs(log_file):
+    global lines
+    logs = []
+    global error_lines 
+    triesPostgresql = 20
 
+    global failedTries 
+    global error_logs 
+    connections = []
+
+    for line in log_file.readlines():
+        lines = lines +1
+        if re.match(".*password authentication failed for user.*", line) is not None:
+            badIP = re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', line)
+            fecha = re.search(r'\d\d\d\d-\d\d-\d\d', line)
+            hora = re.search(r'\d\d:\d\d', line)
+            user_tmp = re.search(r'(([A-Z0-9a-z_-]+)@([A-Za-z0-9_-]+))', line)
+            user = user_tmp.group(2) if user_tmp else None
+            db = user_tmp.group(3) if user_tmp else None
+            if badIP  is not None and user is not None:
+                failedTries[(badIP.group(),fecha.group(),hora.group(),user,db)] = failedTries.get((badIP.group(),fecha.group(),hora.group(),user,db) , 0) + 1
+        if re.match(".*ERROR:.*", line) is not None:
+            tmp = re.search(r'@(.+) ERROR:  (.+)', line)
+            error_line =  tmp.group(1) if tmp else None
+            db =  tmp.group(2) if tmp else None
+            if error_line  is not None:
+                error_logs[(error_line,db)] = error_logs.get((error_line,db) , 0) + 1
+            error_lines.append(line.replace('\n',''))
+
+    top = sorted(failedTries, key =failedTries.get, reverse = True )
+    for f in top:
+        if int(failedTries[f]) >= int(triesPostgresql):
+            ips.add(f[0])
+        else:
+            break
 
 
 #Analyze each line of the php log to find the errors
@@ -732,6 +773,23 @@ def reportResults(service, attacks_conf, output, graph):
             out.write('_'*100+'\n\nConnections:\n\n')
             top = sorted(ip_dict, key =ip_dict.get, reverse = True )
             for f in top: out.write("\tIP: %s Times: %s\n" % (f+'\t',str(ip_dict[f])))
+
+        #If the service selected is postgresql will create the report with the information found
+        if service == 'postgresql':
+            out.write('_'*50+'\nFailed Authentication Tries\n\n')
+            top = sorted(failedTries, key =failedTries.get, reverse = True )
+            for f in top[:10]:
+                out.write('\tIP: %s Times: %s User: %s Data Base: %s Date: %s %s\n' % (f[0]+'\t',str(failedTries[f])+'\t',f[3],f[4],f[1],f[2]))
+            out.write('_'*50+'\nErrors\n\n')
+            top = sorted(error_logs, key =error_logs.get, reverse = True )
+            for f in top[:10]:
+                out.write('\tTimes: %s Data Base: %s Error: %s\n' % (str(error_logs[f])+'\t',f[0]+'\t',f[1]))
+            
+            evd.write('_'*50+'\nErrors\n\n')
+            for error in error_lines: 
+                evd.write('%s\n' % (error))
+
+
 
         #If the service selected is apache or nginx will create the report with
         #the attacks found.
@@ -826,7 +884,7 @@ def filterAnalysis(opts, logs, rules, rot_conf):
         attack_rules = {'bf': [rules['bf_seconds'], rules['bf_tries']]} #If analysing database, will only look for BF attacks
         checkLogFiles(logs['postgresql_log'])
         openLogs('postgresql_log', logs['postgresql_log'], attack_rules, rot_conf)
-        reportResults('posgresql', f_attacks, opts['output'], opts['graph'])
+        reportResults('postgresql', f_attacks, opts['output'], opts['graph'])
 
     if 'mysql' in services:
         pass
