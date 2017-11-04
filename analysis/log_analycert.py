@@ -20,6 +20,44 @@ import plotly
 import plotly.graph_objs as go
 
 
+def banner():                                                  
+    print color.Cyan+"""\n\n             MMMMMMMMMMMMMMMMMMMMMMMMM                  
+       MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM            
+     MMMMMMMMMMMMMMM           MMMMMMMMMMMMMMM        
+     MMMMMM       MMMM       MMMM       MMMMMM         
+     M         MMMMMMMM    MMMMMMMMM                    
+      MMMMM      MMMMMM    MMMMM        MMMMM           
+    MMMMMMMM       MMMM   MMMMMM       MMMMMMMM         
+    MMMMMMMM      MMMMMM  MMMMMMMM     MMMMMMMM         
+    MMMMMMMMMMMMMMMMM         MMMMMMMMMMMMMMMMM         
+    MMMMMMMMMMMMMMM             MMMMMMMMMMMMMMM         
+    MMMMMMMMMMMMM   MMMMMMMMMMM   MMMMMMMMMMMMM         
+    MMMMMMMMMMMM   MMM MMMMM MMM   MMMMMMMMMMMM         
+    MMMMMMMMMMM  MMM       MM  MMM  MMMMMMMMMMM         
+    MMMMMMMMMM   MMM       MMM MMM   MMMMMMMMMM         
+    MMMMMMMMMM  MMMMM         MMMMM  MMMMMMMMMM         
+    MMMMMMMMMM  MMMMMM          MMM  MMMMMMMMMM         
+    MMMMMMMMMM  MMMMM  MM       MMM  MMMMMMMMMM         
+    MMMMMMMMMM   MMM  MM  MM    MM   MMMMMMMMMM         
+    MMMMMMMMMMM  MMM MM MMMMMMMMM   MMMMMMMMMMM         
+    MMMMMMMMMMMM   MMMMMMMMMMMMM   MMMMMMMMMMMM         
+                     MMMMMMMMM                          
+                                                        
+    M       M  MM      M     MM      M       M          
+    M       M  M M     M     MM     MMM     MM          
+    M       M  M  MM   M    M  M    M M    M M          
+    M       M  M    M  M   MMMMMM   M  M  M  M          
+     M     M   M     MMM  M     MM  M   MM   M         
+      M M M    M       M  M      M  M        M         
+                                                        
+       MMMM      MMMMM      MMMM       MMMMMMMM        
+    MM           M          M    M        MM           
+    M            M          M    M        MM           
+   MM            MMMM       M M           MM           
+    M            M          M  MM         MM           
+      MMMMMM     MMMMM      M    M        MM\n\n\n\n"""+color.Color_off
+
+
 #variables to count in mail logs
 count_mail = 0
 count_e_fatal = 0
@@ -75,7 +113,7 @@ class color:
     Purple='\033[0;35m'       # Purple
     Cyan='\033[0;36m'         # Cyan
     Color_off = '\033[0m'
-    Cold = '\033[1m'
+    Bold = '\033[1m'
     Underline = '\033[4m'
 
 #Class to manage each record in the php log file.
@@ -117,7 +155,7 @@ class Attack(object):
 
 #Writes in stderr the message and exits
 def printError(msg, exit):
-    sys.stderr.write('Error:\t%s\n' % msg)
+    sys.stderr.write(color.Red+'Error:\t%s\n' % msg+color.Color_off)
     if exit:
         sys.exit(1)
 
@@ -432,8 +470,6 @@ def findAttack(attack_rules, reg, log_type):
                     match = re.search(rule, reg.group('agent'))
                     if match is not None:
                         crawlers[(reg.group('agent'))] = crawlers.get((reg.group('agent')) , 0) + 1
-                        #print "BAIDUUUUU"
-                        #print unquoted
                         return attack_obj
 
 
@@ -917,6 +953,7 @@ def writeIPToFile(output):
 #Start point
 if __name__ == '__main__':
 #    try:
+    banner()
     start_time = datetime.utcnow()
     cmd_opts = addOptions() #Adds the options to use
     checkOptions(cmd_opts) #Validates that all the options are correct
