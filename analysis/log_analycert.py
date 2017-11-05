@@ -18,7 +18,7 @@ from collections import defaultdict
 from itertools import chain
 import plotly
 import plotly.graph_objs as go
-
+from geoip import geolite2
 
 def banner():                                                  
     print color.Cyan+"""\n\n             MMMMMMMMMMMMMMMMMMMMMMMMM                  
@@ -73,10 +73,18 @@ dest_dict = dict()
 ip_dict = dict()
 
 
+##variables used to count in the ssh logs
+failure_IPS = {}
+failure_USRS = {}
+failedTries = {}
+failed_attempts = 0
+logs = {}
+sshTries = 20
 #variables used to count in the postgresql logs
 failedTries = {}
 error_logs = {}
 error_lines = []
+
 #variables used to count in the mysql logs
 failedTries_mysql = {}
 #Variables to count errors in php logs
@@ -117,6 +125,17 @@ class color:
     Color_off = '\033[0m'
     Bold = '\033[1m'
     Underline = '\033[4m'
+
+
+#Class to manage each record in the php log file.
+class sshLog:
+    def __init__(self, usr):
+        self.usr = usr
+        self.logs = []
+        self.fail_logs = []
+        self.succ_logs = []
+        self.ips = []
+        self.commands = []
 
 #Class to manage each record in the php log file.
 class phpLog(object):
@@ -507,6 +526,7 @@ def readLog(log_type, log, attack_rules, compressed = False):
             if log_type == 'mail_log': analyzeMailLogs(i)
             if log_type == 'postgresql_log': analyzePostgresLogs(i)
             if log_type == 'mysql_log' : analyzeMysqlLogs(i)
+            if log_type == 'ssh_log' : analyzeSshLogs(i)  
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
     else:
@@ -515,7 +535,8 @@ def readLog(log_type, log, attack_rules, compressed = False):
             if log_type == 'ftp_log': analyzeFtpLogs(i)
             if log_type == 'mail_log': analyzeMailLogs(i)
             if log_type == 'postgresql_log': analyzePostgresLogs(i)
-            if log_type == 'mysql_log' : analyzeMysqlLogs(i)    
+            if log_type == 'mysql_log' : analyzeMysqlLogs(i)  
+            if log_type == 'ssh_log' : analyzeSshLogs(i)  
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
 
@@ -586,9 +607,6 @@ def analyzeMailLogs(log_file):
     remitentes = set(remitentes)
     remitentes_rej = set(remitentes_rej)
     ip_connections = set(ip_connections)
-
-
-
 
     reporte.write("\n\n-------------------\n")
     reporte.write(" ** IP conectadas **\n\n")
@@ -685,6 +703,143 @@ def analyzeFtpLogs(log_file):
 
     file_reporte.close
     print "+- Uploaded files: " + str(upload) + "\n+- Downloaded files: " + str(download) + "\n+- Succesful logins: " + str(login_exitoso) + "\n+- Failed logins: " + str(login_fallido) + "\n\n\n"
+
+#get the country of an IP
+def getCountry(IP):
+    match = geolite2.lookup(IP)
+    if match is not None:
+        return match.country
+    return "Unknown"
+
+#Gte User from log line
+def getUsr(line):
+    usr = None
+    if "Accepted password" in line:
+        usr = re.search(r'(\bfor\s)(\w+)', line)
+    elif "sudo:" in line:
+        usr = re.search(r'(sudo:\s+)(\w+)', line)
+    elif "authentication failure" in line:
+        usr = re.search(r'USER=\w+', line)
+    elif "for invalid user" in line:
+        usr = re.search(r'(\buser\s)(\w+)', line)
+    elif "Failed password" in line:
+        usr = re.search(r'(\bfor\s)(\w+)', line)
+    elif "Invalid user" in line:
+        usr = re.search(r'(\buser\s)(\w+)', line)
+    if usr is not None:
+        return usr.group(2)
+
+
+def getIP(line):
+    ip = re.search(r'(\bfrom\s)(\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)', line)
+    if ip is not None:
+        return ip.group(2)
+
+def getDate(line):
+#   date = re.search(r'^[A-Za-z]{3}\s*[0-9]{1,2}\s[0-9]{1,2}:[0-9]{2}:[0-9]{2}', line)
+    date = re.search(r'^[A-Za-z]{3}\s*[0-9]{1,2}\s[0-9]{1,2}:[0-9]{2}', line)
+    if date is not None:
+        return date.group(0)
+
+def getCmd(line):
+    cmd = re.search(r'(\bCOMMAND=)(.+?$)', line)
+    if cmd is not None:
+        return cmd.group(2)
+
+def analyzeSshLogs(log_file):
+    global lines
+    global failure_IPS 
+    global failure_USRS 
+    global failedTries
+    global failed_attempts
+    global logs
+
+    for line in log_file.readlines():
+        lines = lines +1
+
+
+        if "Accepted password for" in line:
+            usr = getUsr(line)
+
+            if not usr in logs:
+                logs[usr] = sshLog(usr)
+
+            ip = getIP(line)
+
+            if not ip in logs[usr].ips:
+                logs[usr].ips.append(ip)
+            logs[usr].succ_logs.append(line.rstrip('\n'))
+            logs[usr].logs.append(line.rstrip('\n'))
+
+        elif "Failed password for" in line:
+            usr = getUsr(line)
+            if not usr in logs:
+                logs[usr] = sshLog(usr)
+
+            ip = getIP(line)
+
+            failure_IPS[(ip)] = failure_IPS.get((ip) , 0) + 1
+
+            if not ip in logs[usr].ips:
+                logs[usr].ips.append(ip)
+            logs[usr].fail_logs.append(line.rstrip('\n'))
+            logs[usr].logs.append(line.rstrip('\n'))
+
+
+        elif ":auth): authentication failure;" in line:
+            usr = re.search(r'(\blogname=)(\w+)', line)
+            if usr is not None:
+                usr = usr.group(2)
+            if "(sshd:auth)" in line:
+                usr = getUsr(line)
+                if not usr in logs:
+                    logs[usr] = sshLog(usr)
+                logs[usr].ips.append(getIP(line))
+            else:
+                if not usr in logs:
+                    logs[usr] = sshLog(usr)
+            logs[usr].fail_logs.append(line.rstrip('\n'))
+            logs[usr].logs.append(line.rstrip('\n'))
+        elif "sudo:" in line:
+            usr = getUsr(line)
+            if not usr in logs:
+                logs[usr] = sshLog(usr)
+
+            cmd = getCmd(line)
+            if cmd is not None:
+                if not cmd in logs[usr].commands:
+                    logs[usr].commands.append(cmd)
+            logs[usr].logs.append(line.rstrip('\n'))
+
+    
+    names=[]
+    for i in logs:
+        if i is not None:
+            names.append(i)
+            failed_attempts = failed_attempts + len(logs[i].fail_logs)
+            for reg in logs[i].fail_logs:
+                failedTries[(getIP(reg),getDate(reg))] = failedTries.get((getIP(reg),getDate(reg)) , 0) + 1
+
+    names = sorted(names, key=str.lower)
+
+    for user in names:
+#       print "_"*40
+#       print "User \'%s\'"%user
+#       print "  Failed connections: "+str(len(LOGS[user].fail_logs))
+        failure_USRS[user] = len(logs[user].fail_logs)
+        #for fail in LOGS[user].fail_logs:
+        #   print "\t", fail
+#       print "  Succeded connections: "+str(len(LOGS[user].succ_logs))
+        #for succ in LOGS[user].succ_logs:
+        #   print "\t", succ
+#       print "  Associated IPs:"
+#       for ip in LOGS[user].ips:
+#           print "\t", ip
+#       print "  Commands"
+#       for comm in LOGS[user].commands:
+#           print "\t", comm
+
+
 
 
 def analyzePostgresLogs(log_file):
@@ -860,6 +1015,38 @@ def reportResults(service, attacks_conf, output, graph):
             for error in error_lines: 
                 evd.write('%s\n' % (error))
 
+
+        #If the service selected is postgresql will create the report with the information found
+        if service == 'ssh':               
+            out.write("_"*40+"\nTotal failed logins attempts: %s\n" % str(failed_attempts))
+
+            labels = []
+            values = []
+            countries = {}
+
+            top = sorted(failure_IPS, key =failure_IPS.get, reverse = True )
+
+            out.write("\nTop 10 failed Requests by IP\n\n")
+            for x in top[:10]:
+ #               print "\tIP: "+x+"    \tRetries: "+str(failure_IPS[x])+"\tCountry: "+getCountry(x)
+                out.write('\tIP: %s Retries: %s  Country: %s\n' % (x+'    \t',str(failure_IPS[x])+'\t',getCountry(x)))
+                countries[(getCountry(x))] = countries.get((getCountry(x)) , 0) + failure_IPS[x]
+
+            top = sorted(failure_USRS, key =failure_USRS.get, reverse = True )
+            out.write("\nTop 10 failed users\n\n")
+            for x in top[:10]:
+                out.write("\tUser: %s Retries: %s\n" % (x+'\t', failure_USRS[x]))
+#                print "\tUser: "+x+"        \tRetries: "+str(failure_USRS[x])
+
+            top = sorted(failedTries, key =failedTries.get, reverse = True )
+            out.write("\nTop 10 failed Requests by IP per minute\n\n")
+            for x in top[:10]:
+#                print "\tIP: "+x[0]+"     \tRetries: "+str(failedTries[x]) +"\t Date: "+ x[1]+"\tCountry: "+getCountry(x[0])
+                out.write("\tIP: %s Retries: %s Date: %s Country: %s\n" % (x[0]+'    \t', str(failedTries[x])+'\t', x[1]+'\t', getCountry(x[0]) ))
+            for x in top:
+                if failedTries[x] > sshTries:
+                        ips.add(x[0])    
+
         #If the service selected is postgresql will create the report with the information found
         if service == 'mysql':
             out.write('_'*50+'\nFailed Authentication Tries\n\n')
@@ -979,8 +1166,8 @@ def filterAnalysis(opts, logs, rules, rot_conf):
 
     if 'ssh' in services:
         checkLogFiles(logs['ssh_log'])
-        openLogs('ssh', logs['ssh_log'], attack_rules, rot_conf)
-#        reportResults('mysql', f_attacks, opts['output'], opts['graph'])
+        openLogs('ssh_log', logs['ssh_log'], attack_rules, rot_conf)
+        reportResults('ssh', f_attacks, opts['output'], opts['graph'])
     if 'php' in services:
         checkLogFiles(logs['php_log'])
         openLogs('php_log', logs['php_log'], attack_rules, rot_conf)
