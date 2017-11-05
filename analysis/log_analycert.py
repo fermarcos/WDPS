@@ -77,6 +77,8 @@ ip_dict = dict()
 failedTries = {}
 error_logs = {}
 error_lines = []
+#variables used to count in the mysql logs
+failedTries_mysql = {}
 #Variables to count errors in php logs
 error_fatal = 0
 error_parse = 0
@@ -484,7 +486,8 @@ def parseLine(log_type, line, attack_rules):
             'ssh_log':r'(?P<date>^[A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2}) (?P<code>[a-z]+) (?P<request>.*)',
             'php_log':r'.*',
             'ftp_log':r'.*',
-            'mail_log':r'.*'
+            'mail_log':r'.*',
+            'mysql_log':r'.*'
 
 }
     reg = re.match(log_regex[log_type], line)
@@ -503,6 +506,7 @@ def readLog(log_type, log, attack_rules, compressed = False):
             if log_type == 'ftp_log': analyzeFtpLogs(i)
             if log_type == 'mail_log': analyzeMailLogs(i)
             if log_type == 'postgresql_log': analyzePostgresLogs(i)
+            if log_type == 'mysql_log' : analyzeMysqlLogs(i)
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
     else:
@@ -511,6 +515,7 @@ def readLog(log_type, log, attack_rules, compressed = False):
             if log_type == 'ftp_log': analyzeFtpLogs(i)
             if log_type == 'mail_log': analyzeMailLogs(i)
             if log_type == 'postgresql_log': analyzePostgresLogs(i)
+            if log_type == 'mysql_log' : analyzeMysqlLogs(i)    
             for l in i.readlines():
                 parseLine(log_type, l, attack_rules)
 
@@ -718,6 +723,36 @@ def analyzePostgresLogs(log_file):
         else:
             break
 
+def analyzeMysqlLogs(log_file):
+    global lines
+    logs = []
+    global error_lines 
+    triesPostgresql = 20
+
+    global failedTries_mysql
+    global error_logs 
+    connections = []
+
+    for line in log_file.readlines():
+        lines = lines +1
+        date = re.search(r'^(\d{6}.{1,2}\d{1,2}:\d{2}).*',line)
+        if date is not None: last_date = date.group(1)
+        if re.match(".*(Access|Connect).*denied.*password:", line) is not None:
+            badIP = re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', line)
+            if badIP  is not None:
+                failedTries_mysql[(badIP.group(),last_date)] = failedTries_mysql.get((badIP.group(),last_date) , 0) + 1
+
+
+    top = sorted(failedTries_mysql, key =failedTries_mysql.get, reverse = True )
+    for f in top:
+        if int(failedTries_mysql[f]) >= int(triesPostgresql):
+            ips.add(f[0])
+        else:
+            break
+
+
+
+
 
 #Analyze each line of the php log to find the errors
 def analyzePhpLogs(log_file):
@@ -825,6 +860,21 @@ def reportResults(service, attacks_conf, output, graph):
             for error in error_lines: 
                 evd.write('%s\n' % (error))
 
+        #If the service selected is postgresql will create the report with the information found
+        if service == 'mysql':
+            out.write('_'*50+'\nFailed Authentication Tries\n\n')
+            top = sorted(failedTries_mysql, key =failedTries_mysql.get, reverse = True )
+            for f in top[:10]:
+                out.write('\tIP: %s Times: %s Date: %s \n' % (f[0]+'\t',str(failedTries_mysql[f])+'\t',f[1]))
+            out.write('_'*50+'\nErrors\n\n')
+
+#            top = sorted(error_logs, key =error_logs.get, reverse = True )
+#            for f in top[:10]:
+#                out.write('\tTimes: %s Data Base: %s Error: %s\n' % (str(error_logs[f])+'\t',f[0]+'\t',f[1]))
+#            
+#            evd.write('_'*50+'\nErrors\n\n')
+#            for error in error_lines: 
+#                evd.write('%s\n' % (error))
 
 
         #If the service selected is apache or nginx will create the report with
@@ -923,10 +973,9 @@ def filterAnalysis(opts, logs, rules, rot_conf):
         reportResults('postgresql', f_attacks, opts['output'], opts['graph'])
 
     if 'mysql' in services:
-        pass
-#        checkLogFiles(logs['mysql_log'])
-#        openLogs('mysql', logs['mysql_log'], attack_rules, rot_conf)
-#        reportResults('mysql', f_attacks, opts['output'], opts['graph'])
+        checkLogFiles(logs['mysql_log'])
+        openLogs('mysql_log', logs['mysql_log'], attack_rules, rot_conf)
+        reportResults('mysql', f_attacks, opts['output'], opts['graph'])
 
     if 'ssh' in services:
         checkLogFiles(logs['ssh_log'])
