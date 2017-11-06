@@ -55,7 +55,10 @@ def banner():
     M            M          M    M        MM           
    MM            MMMM       M M           MM           
     M            M          M  MM         MM           
-      MMMMMM     MMMMM      M    M        MM\n\n\n\n"""+color.Color_off
+      MMMMMM     MMMMM      M    M        MM
+
+
+                Log AnalyCERT v2.0\n\n\n\n"""+color.Color_off
 
 
 #variables to count in mail logs
@@ -84,6 +87,14 @@ sshTries = 20
 failedTries = {}
 error_logs = {}
 error_lines = []
+#variables used to count in the ftp logs
+downloaded_files = {}
+failure_ips_ftp = {}
+failure_usr_ftp = {}
+failedTries_ftp = {}
+uploaded_ftp = []
+downloaded_ftp = []
+login_fallido = 0
 #variables used to count in the mysql logs
 failedTries_mysql = {}
 #Variables to count errors in php logs
@@ -606,14 +617,20 @@ def analyzeFtpLogs(log_file):
     upload = 0
     download  = 0
     login_exitoso = 0
-    login_fallido = 0
     failed = []
 
-    file_reporte = open ("reporte_FTP.txt","w")
-    file_failed = open ("failed.txt","w")
-    print "\nAnalizando error y funciones obsoletas FTP"
+    global login_fallido
+    global uploaded_ftp
+    global downloaded_ftp 
+    global lines
+    global downloaded_files
+    global failure_ips_ftp
+    global failure_usr_ftp
+    global failedTries_ftp
+
 
     for line in log_file.readlines():
+        lines = lines +1
         state = ' '.join(line.split()[8:10]).strip(":")
         if not re.search ("Client",state):
             linea_ftp.append(line)
@@ -626,49 +643,31 @@ def analyzeFtpLogs(log_file):
                 login_exitoso +=1
             if re.search("FAIL LOGIN",state):
                 login_fallido +=  1
-                file_failed.write(line)
 
-    file_failed = open ("failed.txt")
-    proc1=subprocess.Popen(['cut','-d',' ','-f','1-4'],stdin=file_failed,stdout=subprocess.PIPE)
-    file_failed.close
-    proc2=subprocess.Popen(['cut','-d',':','-f','1,2'],stdin=proc1.stdout,stdout=subprocess.PIPE)
-    proc3=subprocess.Popen(['uniq','-c'],stdin=proc2.stdout,stdout=subprocess.PIPE)
-
-    (a,err)=proc3.communicate()
-
-    brute = a.split("\n")
-    brute.pop()
+                tmp = re.search(r'(?P<date>^[A-Za-z]{3}.*[A-Za-z]{3}.*\d{1,2}.*\d{1,2}:\d{2}):\d{2} (?P<year>\d{4}).*(?P<IP>\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b)', line)
+                if tmp is not None:
+                    date = tmp.group('date')+" "+tmp.group('year')
+                    failure_ips_ftp[tmp.group('IP')] = failure_ips_ftp.get(tmp.group('IP') , 0) + 1
+                    failedTries_ftp[(date,tmp.group('IP'))] = failedTries_ftp.get((date,tmp.group('IP')) , 0) + 1
 
 
-    f_bruta = 0
-    print "\n -------------------------------- "
-    print " ----- Ataques de Fuerza bruta --- \n"
-    print " Num.\Date \n"
-    for b in brute:
-        if int(b.split()[0]) > 4:
-            f_bruta += 1
-            print b
-            print "\n\n -- Ataques ( +5 eventos / minuto): " + str(f_bruta) + "\n\n"
-
-
-    file_reporte.write("-------- REPORTE FTP ---------\n\n\n")
     cliente_IP =  set(cliente_IP)
 
     for client in cliente_IP :
-    	file_reporte.write("\n ----------- DIRECCION IP ORIGEN  -- " + client + "\n\n")
-    	for line in linea_ftp:
-    		if re.search(client,line):
-    			state = ' '.join(line.split()[8:10]).strip(":")
-    			file_ref = " "
-    			user = (line.split()[7]).strip("[").strip("]")
-    			date = ' '.join(line.split()[0:5])
-    			if re.search("UPLOAD",state) or re.search("DOWNLOAD",state) :
-    				file_ref = line.split(",")[1]
-
-    			file_reporte.write(client+"\t"+ date + "\t" + state + "\t" + user + "\t" + file_ref + "\n")
-
-    file_reporte.close
-    print "+- Uploaded files: " + str(upload) + "\n+- Downloaded files: " + str(download) + "\n+- Succesful logins: " + str(login_exitoso) + "\n+- Failed logins: " + str(login_fallido) + "\n\n\n"
+        for line in linea_ftp:
+            if re.search(client,line):
+                state = ' '.join(line.split()[8:10]).strip(":")
+                file_ref = " "
+                user = (line.split()[7]).strip("[").strip("]")
+                date = ' '.join(line.split()[0:5])
+                if re.search("DOWNLOAD",state):
+                    file_ref = line.split(",")[1]
+                    downloaded_files[file_ref] = downloaded_files.get(file_ref , 0) + 1
+                    downloaded_ftp.append(line)
+                if re.search("UPLOAD",state):
+                    file_ref = line.split(",")[1]
+                    uploaded_ftp.append(line)
+                if user  is not None: failure_usr_ftp[user] = failure_usr_ftp.get(user , 0) + 1
 
 #get the country of an IP
 def getCountry(IP):
@@ -677,7 +676,7 @@ def getCountry(IP):
         return match.country
     return "Unknown"
 
-#Gte User from log line
+#Get the user from log line
 def getUsr(line):
     usr = None
     if "Accepted password" in line:
@@ -1001,6 +1000,49 @@ def reportResults(service, attacks_conf, output, graph):
 
 
         #If the service selected is postgresql will create the report with the information found
+        if service == 'ftp':    
+            labels = []
+            values = []
+            countries = {}
+
+
+            out.write('_'*100+'\n\nGeneral information:\n\n')
+            out.write("\tDownloaded files: %s\n" % ('\t'+str(len(downloaded_ftp))))
+            out.write("\tUploaded files: %s\n" % ('\t'+str(len(uploaded_ftp))))
+            out.write("\tFailed logins: %s\n" % ('   \t'+str(login_fallido)))
+
+
+            out.write('_'*50+'\n\nTop 10 Downloaded Files\n\n')
+            top = sorted(downloaded_files, key =downloaded_files.get, reverse = True )
+            for f in top[:10]:
+                out.write('\tFile: %-40s Times: %s\n' % (f, str(downloaded_files[f])))
+            out.write('_'*50+'\n\nTop 10 failed Requests by IP per minute\n\n')
+            top = sorted(failedTries_ftp, key =failedTries_ftp.get, reverse = True )
+            for x in top[:10]:
+                out.write("\tIP: %s Retries: %s Date: %s Country: %s\n" % (x[1]+'    \t', str(failedTries_ftp[x])+'\t', x[0]+'\t', getCountry(x[1]) ))
+#            for x in top:
+#                if failedTries[x] > sshTries:
+#                        ips.add(x[0])
+            top = sorted(failure_ips_ftp, key =failure_ips_ftp.get, reverse = True )
+            out.write('_'*50+'\n\nTop 10 failed Requests by IP\n\n')
+            for x in top[:10]:
+                out.write('\tIP: %s Retries: %s  Country: %s\n' % (x+'    \t',str(failure_ips_ftp[x])+'\t',getCountry(x)))
+                countries[(getCountry(x))] = countries.get((getCountry(x)) , 0) + failure_ips_ftp[x]
+
+            top = sorted(failure_usr_ftp, key =failure_usr_ftp.get, reverse = True )
+            out.write('_'*50+'\n\nTop 10 failed users\n\n')
+            for x in top[:10]:
+                out.write("\tUser: %-15s Retries: %s\n" % (x, failure_usr_ftp[x]))
+
+            evd.write('_'*50+'\nDownloaded Files:\n\n')
+            for l in downloaded_ftp: 
+                evd.write('%s' % (l))
+
+            evd.write('_'*50+'\nUploaded Files:\n\n')
+            for l in uploaded_ftp: 
+                evd.write('%s' % (l))
+
+        #If the service selected is postgresql will create the report with the information found
         if service == 'ssh':               
             out.write("_"*40+"\nTotal failed logins attempts: %s\n" % str(failed_attempts))
 
@@ -1012,7 +1054,6 @@ def reportResults(service, attacks_conf, output, graph):
 
             out.write("\nTop 10 failed Requests by IP\n\n")
             for x in top[:10]:
- #               print "\tIP: "+x+"    \tRetries: "+str(failure_IPS[x])+"\tCountry: "+getCountry(x)
                 out.write('\tIP: %s Retries: %s  Country: %s\n' % (x+'    \t',str(failure_IPS[x])+'\t',getCountry(x)))
                 countries[(getCountry(x))] = countries.get((getCountry(x)) , 0) + failure_IPS[x]
 
@@ -1020,12 +1061,10 @@ def reportResults(service, attacks_conf, output, graph):
             out.write("\nTop 10 failed users\n\n")
             for x in top[:10]:
                 out.write("\tUser: %s Retries: %s\n" % (x+'\t', failure_USRS[x]))
-#                print "\tUser: "+x+"        \tRetries: "+str(failure_USRS[x])
 
             top = sorted(failedTries, key =failedTries.get, reverse = True )
             out.write("\nTop 10 failed Requests by IP per minute\n\n")
             for x in top[:10]:
-#                print "\tIP: "+x[0]+"     \tRetries: "+str(failedTries[x]) +"\t Date: "+ x[1]+"\tCountry: "+getCountry(x[0])
                 out.write("\tIP: %s Retries: %s Date: %s Country: %s\n" % (x[0]+'    \t', str(failedTries[x])+'\t', x[1]+'\t', getCountry(x[0]) ))
             for x in top:
                 if failedTries[x] > sshTries:
@@ -1159,10 +1198,12 @@ def filterAnalysis(opts, logs, rules, rot_conf):
     if 'ftp' in services:
         checkLogFiles(logs['ftp_log'])
         openLogs('ftp_log', logs['ftp_log'], attack_rules, rot_conf)
+        reportResults('ftp', f_attacks, opts['output'], opts['graph'])
     if 'mail' in services:
         checkLogFiles(logs['mail_log'])
         openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
         reportResults('mail', f_attacks, opts['output'], opts['graph'])
+
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
     with open(output+'.ips', 'w') as o:
