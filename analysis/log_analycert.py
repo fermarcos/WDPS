@@ -921,6 +921,73 @@ def openLogs(log_type, logs, attack_rules, rot_conf):
                 print color.Cyan+"Analyzing "+r_log+color.Color_off
                 readLog(log_type, r_log, attack_rules, rot_conf['compressed'])
 
+#make graphs
+def makeGraphs(values,labels,values1,labels1,values2,labels2,name,name2,name3,service):
+    fig = {
+      "data": [
+        {
+          "values": values,
+          "labels": labels,
+          "domain": {"x": [0, .33]},
+          "name": name,
+          "hoverinfo":"label+percent+name+value",
+          "type": "pie"
+        },
+        {
+          "values": values1,
+          "labels": labels1,
+          "domain": {"x": [.34, .66]},
+          "name": name2,
+          "hoverinfo":"label+percent+name+value",
+          "type": "pie"
+        },     
+        {
+          "values": values2,
+          "labels": labels2,
+          "text":"CO2",
+          "textposition":"inside",
+          "domain": {"x": [.67, 1]},
+          "name": name3,
+          "hoverinfo":"label+percent+name+value",
+          "type": "pie"
+        }],
+      "layout": {
+            "title":"Log AnalyCERT v2.0 Web Report for " + service,
+            "annotations": [
+                {
+                    "font": {
+                        "size": 20
+                    },
+                    "showarrow": False,
+                    "text": name,
+                    "x": 0.14,
+                    "y": 1.0
+                },
+                {
+                    "font": {
+                        "size": 20
+                    },
+                    "showarrow": False,
+                    "text": name2,
+                    "x": 0.50,
+                    "y": 1
+                },
+                {
+                    "font": {
+                        "size": 20
+                    },
+                    "showarrow": False,
+                    "text": name3,
+                    "x": 0.87,
+                    "y": 1
+                }
+            ]
+        }
+    }
+    plotly.offline.plot(fig, filename='report.html')
+
+
+
 
 #Reports the results that hve been found until the selected point
 def reportResults(service, attacks_conf, output, graph):
@@ -1075,6 +1142,15 @@ def reportResults(service, attacks_conf, output, graph):
                 if failedTries[x] > sshTries:
                         ips.add(x[0])    
 
+            #The attacks will be graphed if the option is enabled.
+            if graph is True:
+                for x in countries:
+                    labels1.append(x)
+                    values1.append(countries[x])
+                makeGraphs(values1,labels1,values1,labels1,values1,labels1,'Attacks', 'Countries', 'IP attackers',service) 
+
+
+
         #If the service selected is postgresql will create the report with the information found
         if service == 'mysql':
             out.write('_'*50+'\nFailed Authentication Tries\n\n')
@@ -1156,87 +1232,21 @@ def reportResults(service, attacks_conf, output, graph):
             for ip in top[:10]:
                 out.write('\t\t%s:\t%s\t%s\n' % (ip, ip_attacks_total[ip],getCountry(ip)))
                 countries[(getCountry(ip))] = countries.get((getCountry(ip)) , 0) + ip_attacks_total[ip]
-                labels2.append(ip)
-                values2.append(ip_attacks_total[ip])
-            for x in countries:
-                #       print "Country: "+x+"Times: "+str(countries[x])
-                labels1.append(x)
-                values1.append(countries[x])
+                if graph is True:
+                    labels2.append(ip)
+                    values2.append(ip_attacks_total[ip])
+
 
             #The attacks will be graphed if the option is enabled.
             if graph is True:
-#                trace = go.Pie(labels=labels, values=values)
-#                plotly.offline.plot([trace], filename='attacks.html')
-
-                fig = {
-                  "data": [
-                    {
-                      "values": values,
-                      "labels": labels,
-                      "domain": {"x": [0, .33]},
-                      "name": "Attacks",
-                      "hoverinfo":"label+percent+name+value",
-                      "type": "pie"
-                    },
-                    {
-                      "values": values1,
-                      "labels": labels1,
-                      "domain": {"x": [.34, .66]},
-                      "name": "Countries",
-                      "hoverinfo":"label+percent+name+value",
-                      "type": "pie"
-                    },     
-                    {
-                      "values": values2,
-                      "labels": labels2,
-                      "text":"CO2",
-                      "textposition":"inside",
-                      "domain": {"x": [.67, 1]},
-                      "name": "IP",
-                      "hoverinfo":"label+percent+name+value",
-                      "type": "pie"
-                    }],
-                  "layout": {
-                        "title":"Log AnalyCERT v2.0 Web Report",
-                        "annotations": [
-                            {
-                                "font": {
-                                    "size": 20
-                                },
-                                "showarrow": False,
-                                "text": "Attacks",
-                                "x": 0.15,
-                                "y": 1.0
-                            },
-                            {
-                                "font": {
-                                    "size": 20
-                                },
-                                "showarrow": False,
-                                "text": "Countries",
-                                "x": 0.50,
-                                "y": 1
-                            },
-                            {
-                                "font": {
-                                    "size": 20
-                                },
-                                "showarrow": False,
-                                "text": "IP Attackers",
-                                "x": 0.88,
-                                "y": 1
-                            }
-                        ]
-                    }
-                }
-                plotly.offline.plot(fig, filename='report.html')                
+                for x in countries:
+                    labels1.append(x)
+                    values1.append(countries[x])
+                makeGraphs(values,labels,values1,labels1,values2,labels2,'Attacks', 'Countries', 'IP attackers',service) 
 
 
     lines = 0
     detected_attacks = []
-
-
-
 
 
 
