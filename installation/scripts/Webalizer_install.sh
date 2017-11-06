@@ -143,8 +143,9 @@ configure_web_apache()
 				
 		while  [ $count -lt $num_logs ]; do
 				let count=count+1
-				sitio=`ls -1 *access*log | sed -n $count'p'`
-				
+				log=`ls -1 *access*log | sed -n $count'p'`
+				sitio="${log//_/.}"
+
 				# Copia del archivo de configuracion  webalizer.conf
 				
 				cmd="cp /etc/webalizer/webalizer.conf /etc/webalizer/webalizer.$sitio.conf"
@@ -152,7 +153,7 @@ configure_web_apache()
 				exec_cmd $? "CONFIGURE APACHE $cmd"
 				
 				config_file=/etc/webalizer/webalizer.$sitio.conf				
-				cmd="sed -i s/access.log.1/$sitio/g $config_file"
+				cmd="sed -i s/access.log.1/$log/g $config_file"
 				$cmd
 				exec_cmd $? "CONFIGURE APACHE $cmd"
 				
@@ -225,8 +226,8 @@ configure_web_nginx()
 				
 		while  [ $count -lt $num_logs ]; do
 				let count=count+1
-				sitio=`ls -1 *access*log | sed -n $count'p'`
-
+				log=`ls -1 *access*log | sed -n $count'p'`
+				sitio="${log//_/.}"
 				
 				# Copia del archivo de configuracion  Webalizer.conf
 				
@@ -235,7 +236,7 @@ configure_web_nginx()
 				exec_cmd $? "CONFIGURE NGINX $cmd"	
 				
 				config_file=/etc/webalizer/webalizer.$sitio.conf				
-				cmd="sed -i s/apache2\/access.log.1/nginx\/$sitio/g $config_file"
+				cmd="sed -i s/apache2\/access.log.1/nginx\/$log/g $config_file"
 				$cmd
 				exec_cmd $? "CONFIGURE NGINX $cmd"	
 
