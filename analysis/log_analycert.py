@@ -106,6 +106,7 @@ error_deprecated = 0
 
 bruteForce = dict()
 crawlers = dict()
+ip_attacks_total = {}
 ips = set()
 start_time = ''
 lines = 0
@@ -929,6 +930,10 @@ def reportResults(service, attacks_conf, output, graph):
     global ips
     labels = []
     values = []
+    labels1 = []
+    values1 = []
+    labels2 = []
+    values2 = []
 
     with open(output, 'a') as out, open(output+'.ev','a') as evd:
         out.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
@@ -1090,6 +1095,7 @@ def reportResults(service, attacks_conf, output, graph):
         #If the service selected is apache or nginx will create the report with
         #the attacks found.
         if service == 'apache' or service == 'nginx':
+            countries = {}
             evd.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
             for a in attacks_conf:
                 attack_filter = filter(lambda x: x.attack == a, detected_attacks)
@@ -1120,9 +1126,15 @@ def reportResults(service, attacks_conf, output, graph):
                 top_ips = sorted(ip_times, key =ip_times.get, reverse = True )
                 top_codes = sorted(code_times, key=code_times.get, reverse = True)
 
+
+                for ip in ip_times:
+                    ip_attacks_total[(ip)] = ip_attacks_total.get((ip) , 0) + ip_times[ip]                    
+
                 out.write('\n\tTop 10 attacker IPv4 addresses:\n')
                 for ip in top_ips[:10]:
                     out.write('\t\t%s:\t%s\n' % (ip, ip_times[ip]))
+
+
                 out.write('\n\tTop 10 response codes:\n')
                 for code in top_codes[:10]:
                     out.write('\t\t%s:\t%s\n' % (code, code_times[code]))
@@ -1137,14 +1149,94 @@ def reportResults(service, attacks_conf, output, graph):
             out.write("Requests by crawlers\n\n")
             for x in top[:10]:
                 out.write('\tTimes: %s Agent: %s\n' % (str(crawlers[x])+'\t',x))
+
+            out.write('_'*50+'\n\n')
+            out.write("Top 10 attacker IPv4 addresses total\n\n")
+            top = sorted(ip_attacks_total, key =ip_attacks_total.get, reverse = True )
+            for ip in top[:10]:
+                out.write('\t\t%s:\t%s\t%s\n' % (ip, ip_attacks_total[ip],getCountry(ip)))
+                countries[(getCountry(ip))] = countries.get((getCountry(ip)) , 0) + ip_attacks_total[ip]
+                labels2.append(ip)
+                values2.append(ip_attacks_total[ip])
+            for x in countries:
+                #       print "Country: "+x+"Times: "+str(countries[x])
+                labels1.append(x)
+                values1.append(countries[x])
+
+            #The attacks will be graphed if the option is enabled.
+            if graph is True:
+#                trace = go.Pie(labels=labels, values=values)
+#                plotly.offline.plot([trace], filename='attacks.html')
+
+                fig = {
+                  "data": [
+                    {
+                      "values": values,
+                      "labels": labels,
+                      "domain": {"x": [0, .33]},
+                      "name": "Attacks",
+                      "hoverinfo":"label+percent+name+value",
+                      "type": "pie"
+                    },
+                    {
+                      "values": values1,
+                      "labels": labels1,
+                      "domain": {"x": [.34, .66]},
+                      "name": "Countries",
+                      "hoverinfo":"label+percent+name+value",
+                      "type": "pie"
+                    },     
+                    {
+                      "values": values2,
+                      "labels": labels2,
+                      "text":"CO2",
+                      "textposition":"inside",
+                      "domain": {"x": [.67, 1]},
+                      "name": "IP",
+                      "hoverinfo":"label+percent+name+value",
+                      "type": "pie"
+                    }],
+                  "layout": {
+                        "title":"Log AnalyCERT v2.0 Web Report",
+                        "annotations": [
+                            {
+                                "font": {
+                                    "size": 20
+                                },
+                                "showarrow": False,
+                                "text": "Attacks",
+                                "x": 0.15,
+                                "y": 1.0
+                            },
+                            {
+                                "font": {
+                                    "size": 20
+                                },
+                                "showarrow": False,
+                                "text": "Countries",
+                                "x": 0.50,
+                                "y": 1
+                            },
+                            {
+                                "font": {
+                                    "size": 20
+                                },
+                                "showarrow": False,
+                                "text": "IP Attackers",
+                                "x": 0.88,
+                                "y": 1
+                            }
+                        ]
+                    }
+                }
+                plotly.offline.plot(fig, filename='report.html')                
+
+
     lines = 0
     detected_attacks = []
 
 
-    #The attacks will be graphed if the option is enabled.
-    if graph is True:
-        trace = go.Pie(labels=labels, values=values)
-        plotly.offline.plot([trace], filename='attacks.html')
+
 
 
 
