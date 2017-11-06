@@ -60,10 +60,6 @@ def banner():
 
 #variables to count in mail logs
 count_mail = 0
-count_e_fatal = 0
-count_e_warning = 0
-count_e_error = 0
-count_e_panic = 0
 count_send = 0
 count_received = 0
 count_rejected = 0
@@ -71,8 +67,12 @@ count_inSysStorage = 0
 count_connections = 0
 dest_dict = dict()
 ip_dict = dict()
-
-
+senders_dict = {}
+rejected_dict = {}
+fatal_mail = []
+panic_mail = []
+error_mail = []
+warnings_mail = []
 ##variables used to count in the ssh logs
 failure_IPS = {}
 failure_USRS = {}
@@ -84,7 +84,6 @@ sshTries = 20
 failedTries = {}
 error_logs = {}
 error_lines = []
-
 #variables used to count in the mysql logs
 failedTries_mysql = {}
 #Variables to count errors in php logs
@@ -546,17 +545,9 @@ def analyzeMailLogs(log_file):
     e_warning = []
     e_error = []
     e_panic = []
-    destinatarios = []
-    remitentes = []
-    remitentes_rej = []
-    ip_connections = []
 
     global lines
     global count_mail
-    global count_e_fatal
-    global count_e_warning
-    global count_e_error
-    global count_e_panic
     global count_send
     global count_received
     global count_rejected
@@ -564,74 +555,49 @@ def analyzeMailLogs(log_file):
     global count_connections
     global dest_dict
     global ip_dict
+    global senders_dict
+    global rejected_dict
+    global fatal_mail
+    global panic_mail
+    global error_mail
+    global warnings_mail
 
-    reporte = open("reporte_mail.txt","w")
 
     for line in log_file.readlines():
         lines = lines +1
         if re.search("postfix",line):
             if re.search("fatal: ",line):
-            	e_fatal.append(re.search("(fatal: )(.+)",line).group(2))
-            	count_e_fatal += 1
+                e_fatal.append(re.search("(fatal: )(.+)",line).group(2))
+                fatal_mail.append(line)
             if re.search("warning",line):
-            	e_warning.append(re.search("(warning: )(.+)",line).group(2))
-            	count_e_warning += 1
+                e_warning.append(re.search("(warning: )(.+)",line).group(2))
+                warnings_mail.append(line)
             if re.search("error: ",line):
-            	e_error.append(re.search("(error: )(.+)",line).group(2))
-            	count_e_error += 1
+                e_error.append(re.search("(error: )(.+)",line).group(2))
+                error_mail.append(line)
             if re.search("panic: ",line):
-            	e_panic.append(re.search("(panic: )(.+)",line).group(2))
-            	count_e_panic += 1
+                e_panic.append(re.search("(panic: )(.+)",line).group(2))
+                panic_mail.append(line)
             if re.search("smtpd.+connect from",line):
-                ip_connections.append(re.search("(connect from.+\[)(.+)(\])",line).group(2))
                 count_connections += 1
                 ip_conn = re.search("(connect from.+\[)(.+)(\])",line).group(2)
                 if ip_conn  is not None: ip_dict[ip_conn] = ip_dict.get(ip_conn , 0) + 1
             if re.search("smtp.+sent",line):
-                destinatarios.append(re.search("(to=<)(.+)(>,)",line).group(2))
                 count_send += 1
                 destino = re.search("(to=<)(.+)(>,)",line).group(2)
                 if destino  is not None: dest_dict[destino] = dest_dict.get(destino , 0) + 1
             if re.search("relay=local.+status=sent",line):
-            	count_received += 1
+                count_received += 1
             if re.search("qmgr.+from=<",line):
-            	remitentes.append(re.search("(from=<)(.+)(>,)",line).group(2))
+                remitente = re.search("(from=<)(.+)(>,)",line).group(2)
+                if remitente  is not None: senders_dict[remitente] = senders_dict.get(remitente , 0) + 1
             if re.search("reject",line):
-            	count_rejected += 1
-            	if re.search("from=<",line) is not None:
-            		remitentes_rej.append(re.search("(from=<)(.+)(> to=)",line).group(2))
+                count_rejected += 1
+                if re.search("from=<",line) is not None:
+                    rejected = re.search("(from=<)(.+)(> to=)",line).group(2)
+                    if rejected  is not None: rejected_dict[rejected] = rejected_dict.get(rejected , 0) + 1
             if re.search("Insufficiented system storage",line):
-            	count_inSysStorage += 1
-
-    destinatarios = set(destinatarios)
-    remitentes = set(remitentes)
-    remitentes_rej = set(remitentes_rej)
-    ip_connections = set(ip_connections)
-
-    reporte.write("\n\n-------------------\n")
-    reporte.write(" ** IP conectadas **\n\n")
-    reporte.write("\n".join(ip_connections))
-    reporte.write("\n\n-------------------\n")
-    reporte.write(" ** Destinatarios **\n\n")
-    reporte.write("\n".join(destinatarios))
-    reporte.write("\n\n\n-------------------\n")
-    reporte.write(" ** Remitentes **\n\n")
-    reporte.write("\n".join(remitentes))
-    reporte.write("\n\n\n-------------------\n")
-    reporte.write(" ** Remitentes Rechazados**\n\n")
-    reporte.write("\n".join(remitentes_rej))
-    reporte.write("\n\n\n-------------------\n")
-    reporte.write("\n\n Error Fatal\n\n")
-    reporte.write("\n".join(e_fatal))
-    reporte.write("\n\n Warning\n\n")
-    reporte.write("\n".join(e_warning))
-    reporte.write("\n\n Error\n\n")
-    reporte.write("\n".join(e_error))
-    reporte.write("\n Panic\n\n")
-    reporte.write("\n".join(e_panic))
-    reporte.close
-
-
+                count_inSysStorage += 1
 
 
 def analyzeFtpLogs(log_file):
@@ -699,7 +665,7 @@ def analyzeFtpLogs(log_file):
     			if re.search("UPLOAD",state) or re.search("DOWNLOAD",state) :
     				file_ref = line.split(",")[1]
 
-    			file_reporte.write(date + "\t" + state + "\t" + user + "\t" + file_ref + "\n")
+    			file_reporte.write(client+"\t"+ date + "\t" + state + "\t" + user + "\t" + file_ref + "\n")
 
     file_reporte.close
     print "+- Uploaded files: " + str(upload) + "\n+- Downloaded files: " + str(download) + "\n+- Succesful logins: " + str(login_exitoso) + "\n+- Failed logins: " + str(login_fallido) + "\n\n\n"
@@ -967,14 +933,14 @@ def reportResults(service, attacks_conf, output, graph):
 
     with open(output, 'a') as out, open(output+'.ev','a') as evd:
         out.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
-        out.write('\nStart time: %s\n' % start_time)
-        out.write('End time: %s\n' % datetime.utcnow())
-        out.write('Events parsed: %s\n' % lines)
+        out.write('\nStart time: %s\n' % ('\t'+str(start_time)))
+        out.write('End time: %s\n' % ('\t'+str(datetime.utcnow())))
+        out.write('Events parsed: %s\n' % ('\t'+str(lines)))
         if service == 'apache_log' or service == 'nginx_log': out.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
         evd.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
-        evd.write('\nStart time: %s\n' % start_time)
-        evd.write('End time: %s\n' % datetime.utcnow())
-        evd.write('Events parsed: %s\n' % lines)
+        evd.write('\nStart time: %s\n' % ('\t'+str(start_time)))
+        evd.write('End time: %s\n' % ('\t'+str(datetime.utcnow())))
+        evd.write('Events parsed: %s\n' % ('\t'+str(lines)))
         if service == 'php':
             evd.write('_'*50+'\n\nPHP Errors:\t\tDate:\t\t\t\tFile:\t\t\t\t\tDescription:\n')
             for l in detected_php_info:
@@ -988,17 +954,35 @@ def reportResults(service, attacks_conf, output, graph):
             out.write("\tSent mails: %s\n" % ('\t'+str(count_send)))
             out.write("\tReceived mails: %s\n" % (str(count_received)))
             out.write("\tRejected mails: %s\n" % (str(count_rejected)))
-            out.write("\tFatal error: %s\n" % ('\t'+str(count_e_fatal)))
-            out.write("\tWarnings: %s\n" % ('\t'+str(count_e_warning)))
-            out.write("\tErrors: %s\n" % ('\t'+str(count_e_error)))
-            out.write("\tPanic: %s\n" % ('\t\t'+str(count_e_panic)))
+
+            out.write("\tFatal error: %s\n" % ('\t'+str(len(fatal_mail))))
+            out.write("\tWarnings: %s\n" % ('\t'+str(len(warnings_mail))))
+            out.write("\tErrors: %s\n" % ('\t'+str(len(error_mail))))
+            out.write("\tPanic: %s\n" % ('\t\t'+str(len(panic_mail))))
 
             out.write('_'*100+'\n\nRecipients:\n\n')
             top = sorted(dest_dict, key =dest_dict.get, reverse = True )
-            for f in top: out.write("\tMail: %s Times: %s\n" % (f,'\t'+str(dest_dict[f])))
+            for f in top: out.write("\tMail: %-35s Times: %s\n" % (f,str(dest_dict[f])))
+            out.write('_'*100+'\n\nSenders:\n\n')
+            top = sorted(senders_dict, key =senders_dict.get, reverse = True )
+            for f in top: out.write("\tMail: %-35s Times: %s\n" % (f,str(senders_dict[f])))
+            out.write('_'*100+'\n\nRejected:\n\n')
+            top = sorted(rejected_dict, key =rejected_dict.get, reverse = True )
+            for f in top: out.write("\tMail: %-35s Times: %s\n" % (f,str(rejected_dict[f])))
             out.write('_'*100+'\n\nConnections:\n\n')
             top = sorted(ip_dict, key =ip_dict.get, reverse = True )
             for f in top: out.write("\tIP: %s Times: %s\n" % (f+'\t',str(ip_dict[f])))
+
+            # Mail ERRORS to de evidencE report
+            evd.write('_'*100+'\n\nPanic:\n\n')
+            for e in panic_mail: evd.write('%s' % e) 
+            evd.write('_'*100+'\n\nFatal:\n\n')
+            for e in fatal_mail: evd.write('%s' % e)
+            evd.write('_'*100+'\n\nErrors:\n\n')
+            for e in error_mail: evd.write('%s' % e) 
+            evd.write('_'*100+'\n\nWarnings:\n\n')
+            for e in warnings_mail: evd.write('%s' % e)
+
 
         #If the service selected is postgresql will create the report with the information found
         if service == 'postgresql':
