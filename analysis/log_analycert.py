@@ -1128,12 +1128,17 @@ def reportResults(service, attacks_conf, output, graph):
             for x in top[:10]:
                 out.write('\tIP: %s Retries: %s  Country: %s\n' % (x+'    \t',str(failure_IPS[x])+'\t',getCountry(x)))
                 countries[(getCountry(x))] = countries.get((getCountry(x)) , 0) + failure_IPS[x]
+                if graph is True:
+                    labels2.append(x)
+                    values2.append(failure_IPS[x])
 
             top = sorted(failure_USRS, key =failure_USRS.get, reverse = True )
             out.write("\nTop 10 failed users\n\n")
             for x in top[:10]:
                 out.write("\tUser: %s Retries: %s\n" % (x+'\t', failure_USRS[x]))
-
+                if graph is True:
+                    labels.append(x)
+                    values.append(failure_USRS[x])
             top = sorted(failedTries, key =failedTries.get, reverse = True )
             out.write("\nTop 10 failed Requests by IP per minute\n\n")
             for x in top[:10]:
@@ -1147,7 +1152,7 @@ def reportResults(service, attacks_conf, output, graph):
                 for x in countries:
                     labels1.append(x)
                     values1.append(countries[x])
-                makeGraphs(values1,labels1,values1,labels1,values1,labels1,'Attacks', 'Countries', 'IP attackers',service) 
+                makeGraphs(values,labels,values1,labels1,values2,labels2,'Failed Login Users', 'Countries', 'IP attackers',service) 
 
 
 
