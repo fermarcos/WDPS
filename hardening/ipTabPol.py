@@ -63,9 +63,6 @@ def banner():
 
                 ipTabPol v1.0\n\n\n\n"""+color.Color_off
 
-
-
-
 #Funcion para cargar la configuracion
 def loadConfig(configFile):
     global webPorts, sshPorts, mysqlPorts, psqlPorts
@@ -126,7 +123,6 @@ def getRunningPorts(webService):
     for port in psqlPort.split("\n"):
         if port not in psqlPorts: psqlPorts.append(port)
 
-#    if webPorts[0] != "" : print "Web Ports "+str(webPorts)
     if webPorts[0]   != "" : print color.Cyan+"\tWeb Ports: \t\t"+', '.join([str(item) for item in webPorts])+color.Color_off
     if sshPorts[0]   != "" : print color.Cyan+"\tSSH Port: \t\t"+', '.join([str(item) for item in sshPorts])+color.Color_off
     if mysqlPorts[0] != "" : print color.Cyan+"\tMySQL Port: \t\t"+', '.join([str(item) for item in mysqlPorts])+color.Color_off
@@ -139,21 +135,18 @@ def getRunningPorts(webService):
     if len(psqlAllowedIP)   > 0 and psqlPorts[0]  != "" : print '\t'+color.Cyan+"Allowed for postgresql: \t"+', '.join([str(item) for item in psqlAllowedIP])+color.Color_off  
 
 def getWebAllowed(directory):
+    print color.Cyan+color.Bold+"\n\nDetecting allowed hosts on sites enabled... \n"+color.Color_off
     if os.path.isdir(directory):
-        print color.Cyan+color.Bold+"\n\nDetecting allowed hosts on sites enabled... \n"+color.Color_off
         files = commands.getoutput("ls "+directory).split("\n")
-        #print files
         for f in files:
             print color.Cyan+"\tFile: "+f+color.Color_off
-            #print "grep -i \"Allow from\" "+webDirectory+f+" | column -t | awk '{for(i=3;i<=NF;++i)print $i}'"
             dirs = commands.getoutput("grep -i \"Allow from\" "+webDirectory+f+" | column -t | awk '{for(i=3;i<=NF;++i)print $i}'")
 
             for ip in dirs.split("\n"):
                 if "all" not in ip and ip not in webAllowedIP:
                     print color.Green+"\t\t"+ip+color.Color_off
                     webAllowedIP.append(ip)
-    else: print directory+" doesn't exist\n"
-    #print webAllowedIP
+    else: print "\t"+color.Red+color.Bold+directory+" doesn't exist\n"+color.Color_off
 
 def blockingBlacklist(blacklist):
     lines = [line.rstrip('\n') for line in open(blacklist)]
@@ -163,6 +156,8 @@ def blockingBlacklist(blacklist):
 #Setting up Policy
 def settingPolicy(ipScript):
     ipScript.write("#!/bin/sh\n")
+    ipScript.write("#Se hace un respaldo de las reglas\n")
+    ipScript.write("iptables-save > rules.old\n")
     ipScript.write("#Se inicializa el firewall\n")
     ipScript.write("iptables -F\n")
     ipScript.write("iptables -X\n")
@@ -180,7 +175,6 @@ def webPolicy():
         ipScript.write("#Direcciones permitidas para servicio web\n")
         for port in webPorts:
             for ip in webAllowedIP:
-                #print ip
                 ipScript.write("iptables -A INPUT -p tcp -s "+ip+" --sport 1024:65535 -d "+serverIP+" --dport "+port+" -m state --state NEW,ESTABLISHED -j ACCEPT\n")
                 ipScript.write("iptables -A OUTPUT -p tcp -s "+serverIP+" --sport "+port+" -d "+ip+" --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT\n")
 
@@ -189,7 +183,6 @@ def sshPolicy():
         ipScript.write("#Direcciones permitidas para servicio ssh\n")
         for port in sshPorts:
             for ip in sshAllowedIP:
-                #print ip
                 ipScript.write("iptables -A INPUT -s "+ip+" -d "+serverIP+" -p tcp --dport "+port+" -j ACCEPT\n")
                 ipScript.write("iptables -A OUTPUT -s "+serverIP+"  -d "+ip+" -p tcp --sport "+port+" -j ACCEPT\n")
 
@@ -198,7 +191,6 @@ def mysqlPolicy():
         ipScript.write("#Direcciones permitidas para servicio mysql\n")
         for port in mysqlPorts:
             for ip in mysqlAllowedIP:
-                #print ip
                 ipScript.write("iptables -A INPUT -s "+ip+" -d "+serverIP+" -p tcp --dport "+port+" -j ACCEPT\n")
                 ipScript.write("iptables -A OUTPUT -s "+serverIP+"  -d "+ip+" -p tcp --sport "+port+" -j ACCEPT\n")
 
@@ -207,7 +199,6 @@ def psqlPolicy():
         ipScript.write("#Direcciones permitidas para servicio postgresql\n")
         for port in psqlPorts:
             for ip in psqlAllowedIP:
-                #print ip
                 ipScript.write("iptables -A INPUT -s "+ip+" -d "+serverIP+" -p tcp --dport "+port+" -j ACCEPT\n")
                 ipScript.write("iptables -A OUTPUT -s "+serverIP+"  -d "+ip+" -p tcp --sport "+port+" -j ACCEPT\n")
 
