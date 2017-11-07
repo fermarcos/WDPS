@@ -6,6 +6,60 @@ import itertools
 import commands
 import ConfigParser
 from optparse import OptionParser
+
+#Class to manage the color for printing.
+class color:
+    Red='\033[0;31m'          # Red
+    Green='\033[0;32m'        # Green
+    Yellow='\033[0;33m'       # Yellow
+    Purple='\033[0;35m'       # Purple
+    Cyan='\033[0;36m'         # Cyan
+    Color_off = '\033[0m'
+    Bold = '\033[1m'
+    Underline = '\033[4m'
+
+def banner():                                                  
+    print color.Cyan+"""\n\n             MMMMMMMMMMMMMMMMMMMMMMMMM                  
+       MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM            
+     MMMMMMMMMMMMMMM           MMMMMMMMMMMMMMM        
+     MMMMMM       MMMM       MMMM       MMMMMM         
+     M         MMMMMMMM    MMMMMMMMM                    
+      MMMMM      MMMMMM    MMMMM        MMMMM           
+    MMMMMMMM       MMMM   MMMMMM       MMMMMMMM         
+    MMMMMMMM      MMMMMM  MMMMMMMM     MMMMMMMM         
+    MMMMMMMMMMMMMMMMM         MMMMMMMMMMMMMMMMM         
+    MMMMMMMMMMMMMMM             MMMMMMMMMMMMMMM         
+    MMMMMMMMMMMMM   MMMMMMMMMMM   MMMMMMMMMMMMM         
+    MMMMMMMMMMMM   MMM MMMMM MMM   MMMMMMMMMMMM         
+    MMMMMMMMMMM  MMM       MM  MMM  MMMMMMMMMMM         
+    MMMMMMMMMM   MMM       MMM MMM   MMMMMMMMMM         
+    MMMMMMMMMM  MMMMM         MMMMM  MMMMMMMMMM         
+    MMMMMMMMMM  MMMMMM          MMM  MMMMMMMMMM         
+    MMMMMMMMMM  MMMMM  MM       MMM  MMMMMMMMMM         
+    MMMMMMMMMM   MMM  MM  MM    MM   MMMMMMMMMM         
+    MMMMMMMMMMM  MMM MM MMMMMMMMM   MMMMMMMMMMM         
+    MMMMMMMMMMMM   MMMMMMMMMMMMM   MMMMMMMMMMMM         
+                     MMMMMMMMM                          
+                                                        
+    M       M  MM      M     MM      M       M          
+    M       M  M M     M     MM     MMM     MM          
+    M       M  M  MM   M    M  M    M M    M M          
+    M       M  M    M  M   MMMMMM   M  M  M  M          
+     M     M   M     MMM  M     MM  M   MM   M         
+      M M M    M       M  M      M  M        M         
+                                                        
+       MMMM      MMMMM      MMMM       MMMMMMMM        
+    MM           M          M    M        MM           
+    M            M          M    M        MM           
+   MM            MMMM       M M           MM           
+    M            M          M  MM         MM           
+      MMMMMM     MMMMM      M    M        MM
+
+
+                confAnalyCERT v1.0\n\n\n\n"""+color.Color_off
+
+
+
 #Funcion para cargar la configuracion
 def loadConfig(configFile): 
 
@@ -22,14 +76,14 @@ def loadConfig(configFile):
 
 #Funcion para imprimir mensaje de eror y salir
 def printError(message):
-    sys.stderr.write("Error: %s" % message)
+    sys.stderr.write(color.Red+color.Bold+"Error: %s" % message+color.Color_off)
     sys.exit(1)
 
 def checkOptions(opts):
     for f in opts.service.split(','):
         if f not in ['web','ssh','php','mysql','postgresql','all']: printError("Error: Servicio no disponible:\t%s\n" % f)
-    if opts.out is None: printError("Please enter the name of the report\n")
-    if opts.config is None: printError("Please enter the name of the configuration file\n")
+    if opts.out is      None: printError("Please enter the name of the report with -o <ReportFile>\n")
+    if opts.config is   None: printError("Please enter the name of the configuration file with -c <Configuration file>\n")
 
 def addOptions():
     parser = OptionParser()
@@ -39,7 +93,7 @@ def addOptions():
     return parser
 
 def checkingSSH(sshFile, reportFile):
-    print "Analizando "+sshFile
+    print color.Cyan+"Analizando "+sshFile+color.Color_off
     reportFile.write("_____________________________________________________________________\n")
     reportFile.write("Analizando "+sshFile+"\n")
     reportFile.write("_____________________________________________________________________\n")
@@ -108,7 +162,7 @@ def checkingWEB(webFile, reportFile):
     httpd = commands.getoutput("ls "+webFile)
     
     if httpd=="/etc/httpd/conf/httpd.conf":
-        print "Analizando "+ webFile
+        print color.Cyan+"Analizando "+ webFile +color.Color_off 
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+webFile+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -181,7 +235,7 @@ def checkingWEB(webFile, reportFile):
                 reportFile.write("\tLimitRequestBody - correcto\n")
             else: reportFile.write("\tLa configuracion de este parametro permite limitar las peticiones que se puedan realizar. \n\tEdite su archivo de configuracion con LimitRequestBody 512000 [Este numero es de acuerdo a tus necesidades]\n")
     elif apache=="/etc/apache2/apache2.conf":
-        print "Analizando "+ apaches
+        print color.Cyan+"Analizando "+ apaches +color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+apaches+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -350,7 +404,7 @@ def checkingMYSQL(mysqlFile, reportFile):
     sql="/etc/mysql/my.cnf"
     sqls=commands.getoutput("ls "+sql)
     if com=="/etc/my.cnf":
-        print "Analizando "+ mysqlFile
+        print color.Cyan+ "Analizando "+ mysqlFile + color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+mysqlFile+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -383,7 +437,7 @@ def checkingMYSQL(mysqlFile, reportFile):
             else: reportFile.write("\tHabilita eneral query log \n\t Para habilitar esta funcion se configura la variable general_log a 1\n")
         else: reportFile.write("\tEspecifica la direccion del archivo donde contendra el log\n\tEspecifica la ruta a log general_log_file = /var/log/mysql/mysql.log\n")
     elif sqls=="/etc/mysql/my.cnf":
-        print "Analizando "+ sql
+        print color.Cyan+"Analizando "+ sql + color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+sql+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -427,7 +481,7 @@ def checkingPOSTGRESQL(psqlFile, reportFile):
     ubupostgres = "/etc/postgresql/9.5/main/postgresql.conf"
     ubucm = commands.getoutput("ls "+ubupostgres)
     if psql=="/etc/postgresql/9.4/main/pg_hba.conf":
-        print "Analizando "+ psqlFile
+        print color.Cyan+"Analizando "+ psqlFile+color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+psqlFile+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -441,7 +495,7 @@ def checkingPOSTGRESQL(psqlFile, reportFile):
             reportFile.write("\tPermisos correctos (0600/-rw-------)\n")
         else: reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n")    
     elif psqls=="/var/lib/pgsql/data/pg_hba.conf":
-        print "Analizando "+ pgsql
+        print color.Cyan+"Analizando "+ pgsql+ color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+pgsql+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -468,7 +522,7 @@ def checkingPOSTGRESQL(psqlFile, reportFile):
             reportFile.write("\tBD y users - correcto\n")
     else: print "No tienes postgresql-9.4 o esta en otro directorio"
     if cmconfpsql=="/var/lib/pgsql/data/postgresql.conf":
-        print "Analizando "+ confpsql
+        print color.Cyan+"Analizando "+ confpsql + color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+confpsql+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -500,7 +554,7 @@ def checkingPOSTGRESQL(psqlFile, reportFile):
         else: 
             reportFile.write("\tlisten_addresses - correcto\n")
     elif ubucm == "/etc/postgresql/9.5/main/postgresql.conf":
-        print "Analizando "+ ubupostgres
+        print color.Cyan+"Analizando "+ ubupostgres +color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+ubupostgres+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -540,7 +594,7 @@ def checkingPHP(phpFile, reportFile):
     ub16c = commands.getoutput("ls "+ub16)
     ubu14 = commands.getoutput("ls "+phpFile)
     if ubu14 == "/etc/php5/cli/php.ini":
-        print "Analizando "+ phpFile
+        print color.Cyan+"Analizando "+ phpFile +color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+phpFile+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -615,7 +669,7 @@ def checkingPHP(phpFile, reportFile):
         else: reportFile.write("\tEste parametro ayuda a prevenir XSS\n\tEdite su archivo session.cookie_httponly = 1\n")
         
     elif cphp=="/etc/php.ini":
-        print "\nAnalizando "+ phpc
+        print color.Cyan+"\nAnalizando "+ phpc+color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+phpc+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -690,7 +744,7 @@ def checkingPHP(phpFile, reportFile):
         else: reportFile.write("\tEste parametro ayuda a prevenir XSS\n\tEdite su archivo session.cookie_httponly = 1\n")
         
     elif ub16c == "/etc/php/7.0/cli/php.ini":
-        print "Analizando "+ ub16
+        print color.Cyan+"Analizando "+ ub16 +color.Color_off
         reportFile.write("_____________________________________________________________________\n")
         reportFile.write("Analizando "+ub16+"\n")
         reportFile.write("_____________________________________________________________________\n")
@@ -771,6 +825,7 @@ if __name__ == '__main__':
     parser = addOptions()
     opts, args = parser.parse_args()
     checkOptions(opts)
+    banner()
     reportFile = opts.out
     configFile = opts.config
 
@@ -792,5 +847,6 @@ if __name__ == '__main__':
                 if s == "postgresql":
                     checkingPOSTGRESQL(psqlFile, report)
         report.close()
+        print color.Green+color.Bold+opts.out + " ha sido creado" + color.Color_off
     except Exception as e:
         print(e)
