@@ -1037,10 +1037,18 @@ def reportResults(service, attacks_conf, output, graph):
 
             out.write('_'*100+'\n\nRecipients:\n\n')
             top = sorted(dest_dict, key =dest_dict.get, reverse = True )
-            for f in top: out.write("\tMail: %-35s Times: %s\n" % (f,str(dest_dict[f])))
+            for f in top: 
+                out.write("\tMail: %-35s Times: %s\n" % (f,str(dest_dict[f])))
+                if graph is True:
+                    labels1.append(f)
+                    values1.append(dest_dict[f])                
             out.write('_'*100+'\n\nSenders:\n\n')
             top = sorted(senders_dict, key =senders_dict.get, reverse = True )
-            for f in top: out.write("\tMail: %-35s Times: %s\n" % (f,str(senders_dict[f])))
+            for f in top: 
+                out.write("\tMail: %-35s Times: %s\n" % (f,str(senders_dict[f])))
+                if graph is True:
+                    labels2.append(f)
+                    values2.append(senders_dict[f])   
             out.write('_'*100+'\n\nRejected:\n\n')
             top = sorted(rejected_dict, key =rejected_dict.get, reverse = True )
             for f in top: out.write("\tMail: %-35s Times: %s\n" % (f,str(rejected_dict[f])))
@@ -1076,17 +1084,12 @@ def reportResults(service, attacks_conf, output, graph):
 
         #The attacks will be graphed if the option is enabled.
         if graph is True:
-            makeGraphs(values,labels,values,labels,values,labels,'Mails Information', 'Top Countries', 'IP attackers',service) 
+            makeGraphs(values,labels,values1,labels1,values2,labels2,'Mails Information', 'Top Senders', 'Top Recipients',service) 
 
 
 
         #If the service selected is postgresql will create the report with the information found
         if service == 'ftp':    
-#            labels = []
-#            values = []
-#            countries = {}
-
-
             out.write('_'*100+'\n\nGeneral information:\n\n')
             out.write("\tDownloaded files: %s\n" % ('\t'+str(len(downloaded_ftp))))
             out.write("\tUploaded files: %s\n" % ('\t'+str(len(uploaded_ftp))))
@@ -1142,10 +1145,6 @@ def reportResults(service, attacks_conf, output, graph):
         if service == 'ssh':               
             out.write("_"*40+"\nTotal failed logins attempts: %s\n" % str(failed_attempts))
 
-#            labels = []
-#            values = []
-#            countries = {}
-
             top = sorted(failure_IPS, key =failure_IPS.get, reverse = True )
 
             out.write("\nTop 10 failed Requests by IP\n\n")
@@ -1200,7 +1199,6 @@ def reportResults(service, attacks_conf, output, graph):
         #If the service selected is apache or nginx will create the report with
         #the attacks found.
         if service == 'apache' or service == 'nginx':
-#            countries = {}
             evd.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
             for a in attacks_conf:
                 attack_filter = filter(lambda x: x.attack == a, detected_attacks)
