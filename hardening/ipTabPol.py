@@ -10,6 +10,62 @@ import itertools
 import commands
 import ConfigParser
 from optparse import OptionParser
+
+
+#Class to manage the color for printing.
+class color:
+    Red='\033[0;31m'          # Red
+    Green='\033[0;32m'        # Green
+    Yellow='\033[0;33m'       # Yellow
+    Purple='\033[0;35m'       # Purple
+    Cyan='\033[0;36m'         # Cyan
+    Color_off = '\033[0m'
+    Bold = '\033[1m'
+    Underline = '\033[4m'
+
+def banner():                                                  
+    print color.Cyan+"""\n\n             MMMMMMMMMMMMMMMMMMMMMMMMM                  
+       MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM            
+     MMMMMMMMMMMMMMM           MMMMMMMMMMMMMMM        
+     MMMMMM       MMMM       MMMM       MMMMMM         
+     M         MMMMMMMM    MMMMMMMMM                    
+      MMMMM      MMMMMM    MMMMM        MMMMM           
+    MMMMMMMM       MMMM   MMMMMM       MMMMMMMM         
+    MMMMMMMM      MMMMMM  MMMMMMMM     MMMMMMMM         
+    MMMMMMMMMMMMMMMMM         MMMMMMMMMMMMMMMMM         
+    MMMMMMMMMMMMMMM             MMMMMMMMMMMMMMM         
+    MMMMMMMMMMMMM   MMMMMMMMMMM   MMMMMMMMMMMMM         
+    MMMMMMMMMMMM   MMM MMMMM MMM   MMMMMMMMMMMM         
+    MMMMMMMMMMM  MMM       MM  MMM  MMMMMMMMMMM         
+    MMMMMMMMMM   MMM       MMM MMM   MMMMMMMMMM         
+    MMMMMMMMMM  MMMMM         MMMMM  MMMMMMMMMM         
+    MMMMMMMMMM  MMMMMM          MMM  MMMMMMMMMM         
+    MMMMMMMMMM  MMMMM  MM       MMM  MMMMMMMMMM         
+    MMMMMMMMMM   MMM  MM  MM    MM   MMMMMMMMMM         
+    MMMMMMMMMMM  MMM MM MMMMMMMMM   MMMMMMMMMMM         
+    MMMMMMMMMMMM   MMMMMMMMMMMMM   MMMMMMMMMMMM         
+                     MMMMMMMMM                          
+                                                        
+    M       M  MM      M     MM      M       M          
+    M       M  M M     M     MM     MMM     MM          
+    M       M  M  MM   M    M  M    M M    M M          
+    M       M  M    M  M   MMMMMM   M  M  M  M          
+     M     M   M     MMM  M     MM  M   MM   M         
+      M M M    M       M  M      M  M        M         
+                                                        
+       MMMM      MMMMM      MMMM       MMMMMMMM        
+    MM           M          M    M        MM           
+    M            M          M    M        MM           
+   MM            MMMM       M M           MM           
+    M            M          M  MM         MM           
+      MMMMMM     MMMMM      M    M        MM
+
+
+                ipTabPol v1.0\n\n\n\n"""+color.Color_off
+
+
+
+
 #Funcion para cargar la configuracion
 def loadConfig(configFile):
     global webPorts, sshPorts, mysqlPorts, psqlPorts
@@ -39,13 +95,13 @@ def loadConfig(configFile):
 
 #Funcion para imprimir mensaje de eror y salir
 def printError(message):
-    sys.stderr.write("Error: %s" % message)
+    sys.stderr.write(color.Red+color.Bold+"Error: %s" % message + color.Color_off)
     sys.exit(1)
 
 def checkOptions(opts):
-    if opts.config is None: printError("Please enter the name of the configuration file with -c\n")
-    if opts.blacklist is None: printError("Please enter the name of the blacklist file with -b\n")
-    if opts.webService is None or opts.webService not in ["apache2","httpd"] : printError("Please enter the name of the WEB service file with -w apache2|httpd\n")
+    if opts.config      is None: printError("Please enter the name of the configuration file with -c\n")
+    if opts.blacklist   is None: printError("Please enter the name of the blacklist file with -b\n")
+    if opts.webService  is None or opts.webService not in ["apache2","httpd"] : printError("Please enter the name of the WEB service file with -w apache2|httpd\n")
 
 def addOptions():
     parser = OptionParser()
@@ -55,12 +111,12 @@ def addOptions():
     return parser
 
 def getRunningPorts(webService):
-    webPort = commands.getoutput("netstat -natp | column -t | grep "+webService+" | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
-    sshPort = commands.getoutput("netstat -natp | column -t | grep     sshd | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
+    webPort   = commands.getoutput("netstat -natp | column -t | grep "+webService+" | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
+    sshPort   = commands.getoutput("netstat -natp | column -t | grep     sshd | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
     mysqlPort = commands.getoutput("netstat -natp | column -t | grep  mysqld | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
-    psqlPort = commands.getoutput("netstat -natp | column -t | grep postgres | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
+    psqlPort  = commands.getoutput("netstat -natp | column -t | grep postgres | awk '{print $4}' | rev |cut -d':' -f 1 | rev")
 
-    print "Detecting running services: \n"
+    print color.Cyan+color.Bold+"Detecting running services... \n"+color.Color_off
     for port in webPort.split("\n"):
         if port not in webPorts: webPorts.append(port)
     for port in sshPort.split("\n"):
@@ -70,31 +126,34 @@ def getRunningPorts(webService):
     for port in psqlPort.split("\n"):
         if port not in psqlPorts: psqlPorts.append(port)
 
-    if webPorts[0] != "" : print "Web Ports "+str(webPorts)
-    if sshPorts[0] != "" :print "SSH Port "+str(sshPorts)
-    if mysqlPorts[0] != "" :print "MySQL Port "+str(mysqlPorts)
-    if psqlPorts[0] != "" :print "postgresql Port "+str(psqlPorts)
+#    if webPorts[0] != "" : print "Web Ports "+str(webPorts)
+    if webPorts[0]   != "" : print color.Cyan+"\tWeb Ports: \t\t"+', '.join([str(item) for item in webPorts])+color.Color_off
+    if sshPorts[0]   != "" : print color.Cyan+"\tSSH Port: \t\t"+', '.join([str(item) for item in sshPorts])+color.Color_off
+    if mysqlPorts[0] != "" : print color.Cyan+"\tMySQL Port: \t\t"+', '.join([str(item) for item in mysqlPorts])+color.Color_off
+    if psqlPorts[0]  != "" : print color.Cyan+"\tpostgresql Port: \t"+', '.join([str(item) for item in psqlPorts])+color.Color_off
 
-    if len(webAllowedIP) > 0 and webPorts[0] != "" :print "\n\nAllowed web IPS from config file: "      +    str(webAllowedIP)
-    if len(sshAllowedIP) > 0 and sshPorts[0] != "" :print "Allowed ssh IPS from config file: "      +    str(sshAllowedIP)
-    if len(mysqlAllowedIP) > 0 and mysqlPorts[0] != "" :print "Allowed mysql IPS from config file: "      +    str(mysqlAllowedIP)
-    if len(psqlAllowedIP) > 0 and psqlPorts[0] != "" :print "Allowed postgresql IPS from config file: "      +    str(psqlAllowedIP)
+    print color.Cyan+color.Bold+"\n\nDetecting allowed ip addresses from the configuration file... \n"+color.Color_off
+    if len(webAllowedIP)    > 0 and webPorts[0]   != "" : print '\t'+color.Cyan+"Allowed for web service: \t"+', '.join([str(item) for item in webAllowedIP])+color.Color_off
+    if len(sshAllowedIP)    > 0 and sshPorts[0]   != "" : print '\t'+color.Cyan+"Allowed for ssh service: \t"+', '.join([str(item) for item in sshAllowedIP])+color.Color_off
+    if len(mysqlAllowedIP)  > 0 and mysqlPorts[0] != "" : print '\t'+color.Cyan+"Allowed for mysql:  \t\t"  +', '.join([str(item) for item in mysqlAllowedIP])+color.Color_off
+    if len(psqlAllowedIP)   > 0 and psqlPorts[0]  != "" : print '\t'+color.Cyan+"Allowed for postgresql: \t"+', '.join([str(item) for item in psqlAllowedIP])+color.Color_off  
 
 def getWebAllowed(directory):
     if os.path.isdir(directory):
+        print color.Cyan+color.Bold+"\n\nDetecting allowed hosts on sites enabled... \n"+color.Color_off
         files = commands.getoutput("ls "+directory).split("\n")
         #print files
         for f in files:
-            print "\nSearching for allowed hosts on: "+f
+            print color.Cyan+"\tFile: "+f+color.Color_off
             #print "grep -i \"Allow from\" "+webDirectory+f+" | column -t | awk '{for(i=3;i<=NF;++i)print $i}'"
             dirs = commands.getoutput("grep -i \"Allow from\" "+webDirectory+f+" | column -t | awk '{for(i=3;i<=NF;++i)print $i}'")
-        print "\nAllowed IP from sites files"
-        for ip in dirs.split("\n"):
-            if "all" not in ip and ip not in webAllowedIP:
-                print ip
-                webAllowedIP.append(ip)
+
+            for ip in dirs.split("\n"):
+                if "all" not in ip and ip not in webAllowedIP:
+                    print color.Green+"\t\t"+ip+color.Color_off
+                    webAllowedIP.append(ip)
     else: print directory+" doesn't exist\n"
-    print webAllowedIP
+    #print webAllowedIP
 
 def blockingBlacklist(blacklist):
     lines = [line.rstrip('\n') for line in open(blacklist)]
@@ -158,6 +217,7 @@ if __name__ == '__main__':
     parser = addOptions()
     opts, args = parser.parse_args()
     checkOptions(opts)
+    banner()
     configFile = opts.config
     blacklistFile = opts.blacklist
 
@@ -171,8 +231,8 @@ if __name__ == '__main__':
         sshPolicy()
         mysqlPolicy()
         psqlPolicy()
-        print "File iptables.sh has been created\n"
         blockingBlacklist(blacklistFile)
         ipScript.close()
+        print color.Green+color.Bold+"\n\nFile iptables.sh has been created\n"+ color.Color_off
     except Exception as e:
         print(e)
