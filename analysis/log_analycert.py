@@ -187,7 +187,7 @@ class Attack(object):
 
 #Writes in stderr the message and exits
 def printError(msg, exit):
-    sys.stderr.write(color.Red+'Error:\t%s\n' % msg+color.Color_off)
+    sys.stderr.write(color.Red+color.Bold+'Error:\t%s\n' % msg+color.Color_off)
     if exit:
         sys.exit(1)
 
@@ -913,12 +913,12 @@ def analyzePhpLogs(log_file):
 #Opens the log files depending on the service and the rotation configurations
 def openLogs(log_type, logs, attack_rules, rot_conf):
     for log in logs:
-        print color.Cyan+"Analyzing "+log+color.Color_off
+        print color.Cyan+"\t"+log+color.Color_off
         readLog(log_type, log, attack_rules)
         if rot_conf['rotated']:
             rot_logs = getRotatedLogs(log, rot_conf['rot_ext'], rot_conf['rot_max'], 1, []) #Gets a list of the existing rotated logs
             for r_log in rot_logs:
-                print color.Cyan+"Analyzing "+r_log+color.Color_off
+                print color.Cyan+"\t"+r_log+color.Color_off
                 readLog(log_type, r_log, attack_rules, rot_conf['compressed'])
 
 #make graphs
@@ -985,7 +985,7 @@ def makeGraphs(values,labels,values1,labels1,values2,labels2,name,name2,name3,se
         }
     }
     plotly.offline.plot(fig, filename='report_'+service+'.html', auto_open=False)
-
+    print color.Green + '\treport_'+service+'.html has been created.' + color.Color_off
 
 
 
@@ -1066,6 +1066,10 @@ def reportResults(service, attacks_conf, output, graph):
             evd.write('_'*100+'\n\nWarnings:\n\n')
             for e in warnings_mail: evd.write('%s' % e)
 
+            #The attacks will be graphed if the option is enabled.
+            if graph is True:
+                makeGraphs(values,labels,values1,labels1,values2,labels2,'Mails Information', 'Top Senders', 'Top Recipients',service) 
+
 
         #If the service selected is postgresql will create the report with the information found
         if service == 'postgresql':
@@ -1082,9 +1086,7 @@ def reportResults(service, attacks_conf, output, graph):
             for error in error_lines: 
                 evd.write('%s\n' % (error))
 
-        #The attacks will be graphed if the option is enabled.
-        if graph is True:
-            makeGraphs(values,labels,values1,labels1,values2,labels2,'Mails Information', 'Top Senders', 'Top Recipients',service) 
+
 
 
 
@@ -1296,57 +1298,71 @@ def filterAnalysis(opts, logs, rules, rot_conf):
     global start_time
     start_time = datetime.utcnow()
     if 'apache' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing apache logs"+color.Color_off
         checkLogFiles(logs['apache_log']) #Checks if configured log files actually exist
         openLogs('apache_log', logs['apache_log'], attack_rules, rot_conf)
         reportResults('apache', f_attacks, opts['output'], opts['graph'])
 
     if 'nginx' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing nginx logs"+color.Color_off
         checkLogFiles(logs['nginx_log'])
         openLogs('nginx_log', logs['nginx_log'], attack_rules, rot_conf)
         reportResults('nginx', f_attacks, opts['output'], opts['graph'])
 
     if 'postgresql' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing postgresql logs"+color.Color_off
         attack_rules = {'bf': [rules['bf_seconds'], rules['bf_tries']]} #If analysing database, will only look for BF attacks
         checkLogFiles(logs['postgresql_log'])
         openLogs('postgresql_log', logs['postgresql_log'], attack_rules, rot_conf)
         reportResults('postgresql', f_attacks, opts['output'], opts['graph'])
 
     if 'mysql' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing mysql logs"+color.Color_off
         checkLogFiles(logs['mysql_log'])
         openLogs('mysql_log', logs['mysql_log'], attack_rules, rot_conf)
         reportResults('mysql', f_attacks, opts['output'], opts['graph'])
 
     if 'ssh' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing ssh logs"+color.Color_off
         checkLogFiles(logs['ssh_log'])
         openLogs('ssh_log', logs['ssh_log'], attack_rules, rot_conf)
         reportResults('ssh', f_attacks, opts['output'], opts['graph'])
+
     if 'php' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing php logs"+color.Color_off
         checkLogFiles(logs['php_log'])
         openLogs('php_log', logs['php_log'], attack_rules, rot_conf)
         reportResults('php', f_attacks, opts['output'], opts['graph'])
+
     if 'ftp' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing ftp logs"+color.Color_off
         checkLogFiles(logs['ftp_log'])
         openLogs('ftp_log', logs['ftp_log'], attack_rules, rot_conf)
         reportResults('ftp', f_attacks, opts['output'], opts['graph'])
+
     if 'mail' in services:
+        print color.Cyan+color.Bold+"\nAnalyzing mail logs"+color.Color_off
         checkLogFiles(logs['mail_log'])
         openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
         reportResults('mail', f_attacks, opts['output'], opts['graph'])
+    print color.Green+'\n'+opts['output']+' has been created'+color.Color_off
+    print color.Green+opts['output']+'.ev has been created'+color.Color_off
 
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
     with open(output+'.ips', 'w') as o:
         for ip in ips:
             o.write(ip+'\n')
+    print color.Green+output+'.ips has been created'+color.Color_off
 
 
 #Start point
 if __name__ == '__main__':
 #    try:
-    banner()
     start_time = datetime.utcnow()
     cmd_opts = addOptions() #Adds the options to use
     checkOptions(cmd_opts) #Validates that all the options are correct
+    banner()
     log_conf, exec_conf, rules, rot_conf = readConfigFile(cmd_opts.config) #Get initial configurations from the config file
     exec_conf = setExecConf(exec_conf) #Changes strings/numbers for actual boolean values
     exec_conf = setFinalExecConf(exec_conf, cmd_opts) #Set final execution options depending on config file and command-line options
