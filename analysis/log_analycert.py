@@ -984,7 +984,7 @@ def makeGraphs(values,labels,values1,labels1,values2,labels2,name,name2,name3,se
             ]
         }
     }
-    plotly.offline.plot(fig, filename='report.html')
+    plotly.offline.plot(fig, filename='report_'+service+'.html', auto_open=False)
 
 
 
@@ -1001,6 +1001,7 @@ def reportResults(service, attacks_conf, output, graph):
     values1 = []
     labels2 = []
     values2 = []
+    countries = {}
 
     with open(output, 'a') as out, open(output+'.ev','a') as evd:
         out.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
@@ -1026,6 +1027,9 @@ def reportResults(service, attacks_conf, output, graph):
             out.write("\tReceived mails: %s\n" % (str(count_received)))
             out.write("\tRejected mails: %s\n" % (str(count_rejected)))
 
+            if graph is True:
+                labels = ['Sent mails','Received mails','Rejected mails']
+                values = [count_send,count_received,count_rejected]
             out.write("\tFatal error: %s\n" % ('\t'+str(len(fatal_mail))))
             out.write("\tWarnings: %s\n" % ('\t'+str(len(warnings_mail))))
             out.write("\tErrors: %s\n" % ('\t'+str(len(error_mail))))
@@ -1070,12 +1074,17 @@ def reportResults(service, attacks_conf, output, graph):
             for error in error_lines: 
                 evd.write('%s\n' % (error))
 
+        #The attacks will be graphed if the option is enabled.
+        if graph is True:
+            makeGraphs(values,labels,values,labels,values,labels,'Mails Information', 'Top Countries', 'IP attackers',service) 
+
+
 
         #If the service selected is postgresql will create the report with the information found
         if service == 'ftp':    
-            labels = []
-            values = []
-            countries = {}
+#            labels = []
+#            values = []
+#            countries = {}
 
 
             out.write('_'*100+'\n\nGeneral information:\n\n')
@@ -1088,6 +1097,9 @@ def reportResults(service, attacks_conf, output, graph):
             top = sorted(downloaded_files, key =downloaded_files.get, reverse = True )
             for f in top[:10]:
                 out.write('\tFile: %-40s Times: %s\n' % (f, str(downloaded_files[f])))
+                if graph is True:
+                    labels.append(f)
+                    values.append(downloaded_files[f])
             out.write('_'*50+'\n\nTop 10 failed Requests by IP per minute\n\n')
             top = sorted(failedTries_ftp, key =failedTries_ftp.get, reverse = True )
             for x in top[:10]:
@@ -1100,6 +1112,10 @@ def reportResults(service, attacks_conf, output, graph):
             for x in top[:10]:
                 out.write('\tIP: %s Retries: %s  Country: %s\n' % (x+'    \t',str(failure_ips_ftp[x])+'\t',getCountry(x)))
                 countries[(getCountry(x))] = countries.get((getCountry(x)) , 0) + failure_ips_ftp[x]
+                if graph is True:
+                    labels2.append(x)
+                    values2.append(failure_ips_ftp[x])
+
 
             top = sorted(failure_usr_ftp, key =failure_usr_ftp.get, reverse = True )
             out.write('_'*50+'\n\nTop 10 failed users\n\n')
@@ -1114,13 +1130,21 @@ def reportResults(service, attacks_conf, output, graph):
             for l in uploaded_ftp: 
                 evd.write('%s' % (l))
 
+            #The attacks will be graphed if the option is enabled.
+            if graph is True:
+                for x in countries:
+                    labels1.append(x)
+                    values1.append(countries[x])
+                makeGraphs(values,labels,values1,labels1,values2,labels2,'Top Downloaded Files', 'Top Countries', 'IP attackers',service) 
+
+
         #If the service selected is postgresql will create the report with the information found
         if service == 'ssh':               
             out.write("_"*40+"\nTotal failed logins attempts: %s\n" % str(failed_attempts))
 
-            labels = []
-            values = []
-            countries = {}
+#            labels = []
+#            values = []
+#            countries = {}
 
             top = sorted(failure_IPS, key =failure_IPS.get, reverse = True )
 
@@ -1176,7 +1200,7 @@ def reportResults(service, attacks_conf, output, graph):
         #If the service selected is apache or nginx will create the report with
         #the attacks found.
         if service == 'apache' or service == 'nginx':
-            countries = {}
+#            countries = {}
             evd.write('Attacks detected: %s\n\n' % str(len(detected_attacks)))
             for a in attacks_conf:
                 attack_filter = filter(lambda x: x.attack == a, detected_attacks)
