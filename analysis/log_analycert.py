@@ -395,9 +395,9 @@ def setFinalLogConf(log_conf, cmd_opts):
         log_conf['mysql_log'] = cmd_opts.mysql_log.split(',')
     if cmd_opts.ssh_log is not None:
         log_conf['ssh_log'] = cmd_opts.ssh_log.split(',')
-    if cmd_opts.ssh_log is not None:
-        log_conf['ftp_log'] = cmd_opts.ftp_log.split(',')
     if cmd_opts.ftp_log is not None:
+        log_conf['ftp_log'] = cmd_opts.ftp_log.split(',')
+    if cmd_opts.php_log is not None:
         log_conf['php_log'] = cmd_opts.php_log.split(',')
     if cmd_opts.mail_log is not None:
         log_conf['mail_log'] = cmd_opts.mail_log.split(',')
