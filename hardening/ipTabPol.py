@@ -79,10 +79,10 @@ def loadConfig(configFile):
     #Ruta de los archivos de configuracion de los sitios habilitados
     webDirectory = config.get("SitesDirectory","web")
     #Direcciones IP permitidas
-    webAllowedIP = [x for x in config.get("AllowedIPS","web").replace(" ", "").split(',') if validateIP(x)]
-    sshAllowedIP = [x for x in config.get("AllowedIPS","ssh").replace(" ", "").split(',') if validateIP(x)]
-    mysqlAllowedIP = [x for x in config.get("AllowedIPS","mysql").replace(" ", "").split(',') if validateIP(x)]
-    psqlAllowedIP = [x for x in config.get("AllowedIPS","psql").replace(" ", "").split(',') if validateIP(x)]
+    webAllowedIP = set([x for x in config.get("AllowedIPS","web").replace(" ", "").split(',') if validateIP(x)])
+    sshAllowedIP = set([x for x in config.get("AllowedIPS","ssh").replace(" ", "").split(',') if validateIP(x)])
+    mysqlAllowedIP = set([x for x in config.get("AllowedIPS","mysql").replace(" ", "").split(',') if validateIP(x)])
+    psqlAllowedIP = set([x for x in config.get("AllowedIPS","psql").replace(" ", "").split(',') if validateIP(x)])
     #Puertos en los que se ejecuta cada servicio
     webPorts = []
     sshPorts = []
@@ -162,7 +162,7 @@ def getWebAllowed(directory):
 def blockingBlacklist(blacklist):
     lines = [line.rstrip('\n') for line in open(blacklist)]
     ipScript.write("#Direcciones bloqueadas por la lista negra\n")
-    for ip in lines:
+    for ip in set(lines):
         ipScript.write("iptables -A INPUT -s "+ip+" -j DROP\n")
 
 #Setting up Policy
