@@ -122,7 +122,7 @@ def getExistingFiles(paths):
 
 def parseApacheConf(apaches,reportFile,sitesPath):
     contentFile = commands.getoutput("grep -v  '^#\|^$' " + apaches)
-    print color.Cyan+"Analizando "+ apaches +color.Color_off
+    print color.Cyan+color.Bold+"Analizando "+ apaches +color.Color_off
     reportFile.write("_____________________________________________________________________\n")
     reportFile.write("Analizando "+apaches+"\n")
     reportFile.write("_____________________________________________________________________\n")
@@ -158,7 +158,7 @@ def parseApacheConf(apaches,reportFile,sitesPath):
     for i in s: 
         for line in i.split("\n"):
             if re.match("<Directory", line): 
-                print color.Cyan+"Analizando: "+line+color.Color_off
+                print color.Cyan+"\tAnalizando: "+line+color.Color_off
                 reportFile.write("\nAnalizando: "+line+'\n'+'-'*20)
         #print i+"____________________"
         indexes = re.search("(.*Options)\s+(\w+.*)", i)
@@ -166,7 +166,7 @@ def parseApacheConf(apaches,reportFile,sitesPath):
         if indexes is not None : 
             #Revision de options Indexes
             reportFile.write("\nOptions Indexes \n")
-            print indexes.group(2)
+            #print indexes.group(2)
             if "-Indexes" in indexes.group(2):
                 reportFile.write("\tOptions -Indexes - correcto\n")
             else: 
@@ -195,20 +195,20 @@ def parseApacheConf(apaches,reportFile,sitesPath):
     
     #Se comprueba la ecistencia del directorio de sitios habilitados
     if os.path.isdir(sitesPath):
-        directorio = "/etc/apache2/sites-enabled/"
         #Se obtienen los archivos de configuracion de cada sitio    
-        sitesFiles = [f for f in os.listdir(directorio) if os.path.isfile(os.path.join(directorio, f))]
+        sitesFiles = [f for f in os.listdir(sitesPath) if os.path.isfile(os.path.join(sitesPath, f))]
         for fa in sitesFiles:
+            print color.Cyan + color.Bold + "Analizando "+sitesPath+fa+"\n"
             reportFile.write("_____________________________________________________________________\n")
-            reportFile.write("Analizando "+directorio+fa+"\n")
+            reportFile.write("Analizando "+sitesPath+fa+"\n")
             reportFile.write("_____________________________________________________________________\n")
             reportFile.write("\nDirectory \n")
-            virtual_hosts = commands.getoutput("awk '/^<VirtualHost*/,/^<\/VirtualHost>/{if(!/^($|\t*#)/) print $_}' "+directorio+fa)
+            virtual_hosts = commands.getoutput("awk '/^<VirtualHost*/,/^<\/VirtualHost>/{if(!/^($|\t*#)/) print $_}' "+sitesPath+fa)
             d = "VirtualHost>"
             s =  [e+d for e in virtual_hosts.split(d) if e]
             for i in s: 
                 for line in i.split("\n"):
-                    if re.match("<VirtualHost", line): print color.Cyan+"Analizando: "+line+color.Color_off
+                    if re.match("<VirtualHost", line): print color.Cyan+"\tAnalizando: "+line+color.Color_off
                 #print i+"____________________"
                 indexes = re.search("(.*Options)\s+(\w+.*)", i)
                 if indexes is not None:
@@ -237,7 +237,6 @@ def parseApacheConf(apaches,reportFile,sitesPath):
                 #Revision Deny from all
                 reportFile.write("\n\tDeny from all\n")
                 denf = re.search("(.*Deny from all.*)", i)
-                #denf = commands.getoutput("grep \"Deny from all\" "+directorio+fa)
                 if denf is not None:
                     reportFile.write("\t\tDeny from all -correct \n")
                 else: 
@@ -246,18 +245,18 @@ def parseApacheConf(apaches,reportFile,sitesPath):
                 #Revision LimitRequestBody
                 reportFile.write("\nLimitRequestBody \n")
                 limit = re.search("(.*LimitRequestBody)\s+(\d+.*)", i)
-                #limit = commands.getoutput("grep \"\LimitRequestBody\" "+directorio+fa)
                 if limit is not None:
                     reportFile.write("\tLimitRequestBody - correcto\n")
                 else: 
                     reportFile.write("\tLa configuracion de este parametro permite limitar las peticiones que se puedan realizar. \n\tEdite su archivo de configuracion con LimitRequestBody 512000 [Este numero es de acuerdo a tus necesidades]\n")
 
 def parseApacheSecurity(apache_file):
-    print "ANALIZYNG APACHE SECURITY"
+    print color.Cyan+color.Bold+"Analizando "+ apache_file +color.Color_off
+
                        
 def parseApacheSsl(apache_ssl,reportFile):
     contentFile = commands.getoutput("grep -v  '^#\|^$' " + apache_ssl)
-    print color.Cyan+"Analizando "+ apache_ssl +color.Color_off
+    print color.Cyan+color.Bold+"Analizando "+ apache_ssl +color.Color_off
     reportFile.write("_____________________________________________________________________\n")
     reportFile.write("Analizando "+apache_ssl+"\n")
     reportFile.write("_____________________________________________________________________\n")
@@ -267,16 +266,16 @@ def parseApacheSsl(apache_ssl,reportFile):
     reportFile.write("\nPermisos y propietario \n")
     if "Uid:(0/root)Gid:(0/root)" in owner:
         reportFile.write("\tPropietario correcto Uid:(0/root)Gid:(0/root)\n")
-    else: reportFile.write("\tEjecute  chown root:root "+apache_ssl+ "para cambiar el propietario\n")
+    else: 
+        reportFile.write("\tEjecute  chown root:root "+apache_ssl+ "para cambiar el propietario\n")
     if "(0644/-rw-r--r--)" in permisos:
         reportFile.write("\tPermisos correctos (0644/-rw-r--r--)\n")
-    else: reportFile.write("\tPermisos: "+apache_ssl+ " Incorrectos\n\tEjecute:  chmod 644 /etc/httpd/conf/httpd.conf para cambiarlos\n")
-    print contentFile
-
+    else: 
+        reportFile.write("\tPermisos: "+apache_ssl+ " Incorrectos\n\tEjecute:  chmod 644 /etc/httpd/conf/httpd.conf para cambiarlos\n")
 
 
 def parseSshServer(sshFile, reportFile):
-    print color.Cyan+"Analizando "+sshFile+color.Color_off
+    print color.Cyan+color.Bold+"Analizando "+sshFile+color.Color_off
     reportFile.write("_____________________________________________________________________\n")
     reportFile.write("Analizando "+sshFile+"\n")
     reportFile.write("_____________________________________________________________________\n")
@@ -287,10 +286,12 @@ def parseSshServer(sshFile, reportFile):
     reportFile.write("\nPermisos y propietario \n")
     if "Uid:(0/root)Gid:(0/root)" in owner:
         reportFile.write("\tPropietario correcto Uid:(0/root)Gid:(0/root)\n")
-    else: reportFile.write("\tEjecute  chown root:root "+sshFile+ "para cambiar el propietario\n")
+    else: 
+        reportFile.write("\tEjecute  chown root:root "+sshFile+ "para cambiar el propietario\n")
     if "(0600/-rw-------)" in permisos:
         reportFile.write("\tPermisos correctos (0600/-rw-------)\n")
-    else: reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod og-rwx /etc/ssh/sshd_config para cambiarlos\n")
+    else: 
+        reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod og-rwx /etc/ssh/sshd_config para cambiarlos\n")
     #Revision de protocolos
     reportFile.write("\nProtocolo SSH \n")
     proto = re.search("(Protocol)\s+(\d)", contentFile)
@@ -356,7 +357,7 @@ def parseSshServer(sshFile, reportFile):
         reportFile.write("\tDeshabilitar ya que le permite a los usuarios presentar opciones de entorno al daemon ssh. \n\tEdite su archivo de configuracion con PermitUserEnvironment no \n")
 
 def parsePhp(phpFile,reportFile):
-    print "Analizando "+ phpFile
+    print color.Cyan + color.Bold+"Analizando "+ phpFile
     reportFile.write("_____________________________________________________________________\n")
     reportFile.write("Analizando "+phpFile+"\n")
     reportFile.write("_____________________________________________________________________\n")
@@ -462,7 +463,7 @@ def parsePhp(phpFile,reportFile):
 
 
 def parseMysqlServer(mysqlFile,reportFile):
-    print color.Cyan+ "Analizando "+ mysqlFile + color.Color_off
+    print color.Cyan + color.Bold + "Analizando "+ mysqlFile + color.Color_off
     reportFile.write("_____________________________________________________________________\n")
     reportFile.write("Analizando "+mysqlFile+"\n")
     reportFile.write("_____________________________________________________________________\n")
@@ -474,10 +475,12 @@ def parseMysqlServer(mysqlFile,reportFile):
     reportFile.write("\nPermisos y propietario \n")
     if "Uid:(0/root)Gid:(0/root)" in owner:
         reportFile.write("\tPropietario correcto Uid:(0/root)Gid:(0/root)\n")
-    else: reportFile.write("\tEjecute  chown root:root "+mysqlFile+ "para cambiar el propietario\n")
+    else: 
+        reportFile.write("\tEjecute  chown root:root "+mysqlFile+ "para cambiar el propietario\n")
     if "(0600/-rw-------)" in permisos:
         reportFile.write("\tPermisos correctos (0600/-rw-------)\n")
-    else: reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n")
+    else: 
+        reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n")
     #Revision de bind address
     bind = re.search("(bind-address)\s+=\s(.*)", contentFile)
     reportFile.write("\nbind-address \n")
@@ -616,10 +619,12 @@ def parsePsqlServer(confpsql,reportFile):
     reportFile.write("\nPermisos y propietario \n")
     if "Uid:(0/root)Gid:(0/root)" in owner:
         reportFile.write("\tPropietario correcto Uid:(0/root)Gid:(0/root)\n")
-    else: reportFile.write("\tEjecute  chown root:root "+confpsql+ "para cambiar el propietario\n")
+    else: 
+        reportFile.write("\tEjecute  chown root:root "+confpsql+ "para cambiar el propietario\n")
     if "(0600/-rw-------)" in permisos:
         reportFile.write("\tPermisos correctos (0600/-rw-------)\n")
-    else: reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n")
+    else: 
+        reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n")
     #Revision puerto
     reportFile.write("\nPuerto \n")
     port = re.search("(port)\s+=\s+(\d+).*", contentFile)
@@ -635,6 +640,14 @@ def parsePsqlServer(confpsql,reportFile):
         reportFile.write("\tlisten_addresses = '*' \n\tEdita el archivo para que solo determinandas ips puedan acceder a la base de datos\n")
     else: 
         reportFile.write("\tlisten_addresses - correcto\n")
+    #Revision de formato de bitacora
+    reportFile.write("\nFormato de bitacora \n")
+    log_line = re.search("(log_line_prefix)\s+=\s+(\'.*\')(#.*)?", contentFile)
+    if log_line is not None and "%h" in log_line.group(2):
+        reportFile.write("\tlog_line_prefix incluye %h (Direccion remota) - Correcto\n")
+    else:
+        reportFile.write("\tEs importante conocer la dirección IP desde donde se realizan conexiones\n\tAgregue %h a tlog_line_prefix en su archivo de configuración.\n")
+
 
 def parsePsqlHba(pgsql,reportFile):
     print "Analizando "+ pgsql
@@ -647,10 +660,12 @@ def parsePsqlHba(pgsql,reportFile):
     reportFile.write("\nPermisos y propietario \n")
     if "Uid:(0/root)Gid:(0/root)" in owner:
         reportFile.write("\tPropietario correcto Uid:(0/root)Gid:(0/root)\n")
-    else: reportFile.write("\tEjecute  chown root:root "+pgsql+ "para cambiar el propietario\n")
+    else: 
+        reportFile.write("\tEjecute  chown root:root "+pgsql+ "para cambiar el propietario\n")
     if "(0600/-rw-------)" in permisos:
         reportFile.write("\tPermisos correctos (0600/-rw-------)\n")
-    else: reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n") 
+    else: 
+        reportFile.write("\tPermisos: "+permisos+ " Incorrectos\n\tEjecute:  chmod 600 /etc/my.cnf para cambiarlos\n") 
     #Revision de autenticacion
     reportFile.write("\nAutenticacion\n")  
     ipv4 = commands.getoutput("grep -i \"^host\" "+pgsql+" | awk '{print $5}'")
