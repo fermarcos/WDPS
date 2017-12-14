@@ -10,29 +10,39 @@
 #	User Root
 ####################################################################
 
-LOG="`pwd`/installAnalyzers.log"
-userName=`whoami`
-repositoryChange=0
 
-#This vars are for fail2ban times and the emails for the other programms this script installs
-bantime=30
-findtime=600
-maxretry=3
-destemail="root@localhost"
-sender="root@localhost"
+#==========================================#
+	LOG="`pwd`/../log/installAnalyzers.log"	
+	
+	LOG_APACHE="/var/log/apache2/"
+	OSSEC_CONF_TEMP="`pwd`/../templates/ossec.conf"
+	OSSEC_RULES_TEMP="`pwd`/../templates/local_rules.xml"	
+	OSSEC_CONF="/var/ossec/etc/ossec.conf"
+	OSSEC_RULES="/var/ossec/rules/local_rules.xml"
+	F2B_TEMP="`pwd`/../templates/jail.conf"
 
-#COLORS
-# Reset
-Color_Off='\033[0m'       # Text Reset
+	userName=`whoami`
+	repositoryChange=0
 
-# Regular Colors
-Red='\033[0;31m'          # Red
-Green='\033[0;32m'        # Green
-Yellow='\033[0;33m'       # Yellow
-Purple='\033[0;35m'       # Purple
-Cyan='\033[0;36m'         # Cyan
+	#This vars are for fail2ban times and the emails for the other programms this script installs
+	bantime=30
+	findtime=600
+	maxretry=3
+	destemail="root@localhost"
+	sender="root@localhost"
 
+	#COLORS
+	# Reset
+	Color_Off='\033[0m'       # Text Reset
 
+	# Regular Colors
+	Red='\033[0;31m'          # Red
+	Green='\033[0;32m'        # Green
+	Yellow='\033[0;33m'       # Yellow
+	Purple='\033[0;35m'       # Purple
+	Cyan='\033[0;36m'         # Cyan
+#==========================================#
+#####################################################################################################
 #Checks the user running the script. If it's not the root user, ends.
 user_install()
 {
@@ -44,7 +54,7 @@ user_install()
 		exit 1
 	fi
 }
-
+#####################################################################################################
 #Detecting Distribution
 check_distribution()
 {
@@ -78,7 +88,7 @@ check_distribution()
 	        echo "Ubuntu 17"
 	fi
 }
-
+#####################################################################################################
 #Banner that inits log file
 banner_log()
 {
@@ -136,7 +146,7 @@ banner_log()
 	echo -e "$Cyan \nDetecting Distribution..\n $Color_Off"
 }
 
-
+#####################################################################################################
 #Writes in log file the command and if it was correct or not
 log_command()
 {
@@ -148,7 +158,7 @@ log_command()
 	fi
 }
 
-
+#####################################################################################################
 #Modifies sources.list file to install the packages
 modify_repository()
 {
@@ -226,7 +236,7 @@ modify_repository()
 #	fi
 
 }
-
+#####################################################################################################
 #Exits if script failed
 exit_install()
 {
@@ -239,7 +249,7 @@ exit_install()
 	exit 1
 }
 
-
+#####################################################################################################
 #Returns sources.list to original state
 end_repository()
 {
@@ -265,7 +275,7 @@ end_repository()
 		fi
 	fi
 }
-
+#####################################################################################################
 #Installs and configures OSSEC
 configure_ossec()
 {
@@ -346,26 +356,36 @@ configure_ossec()
 	sed -i 's/^#\(USER_ENABLE_FIREWALL_RESPONSE="y"\)/\1/' etc/preloaded-vars.conf	
 	log_command "$?" "sed -i 's/^#\(USER_ENABLE_FIREWALL_RESPONSE=\"y\"\)/\1/' etc/preloaded-vars.conf"
 
-	#Copying rules template
-	mv /var/ossec/rules/local_rules.xml  /var/ossec/rules/local_rules.xml.bak
-    cp templates/local_rules.xml /var/ossec/rules/local_rules.xml
-
-    #Copying configuration template
-    mv /var/ossec/etc/ossec.conf /var/ossec/etc/ossec.conf.bak
-    cp templates/ossec.conf /var/ossec/etc/ossec.conf
 
 	#Runs script that installs ossec
 	cmd="./install.sh"
 	$cmd
 	log_command "$?" "$cmd"
 
+	#Copying rules template
+	cmd="mv $OSSEC_RULES $OSSEC_RULES.bak"
+	$cmd
+	log_command "$?" "$cmd"
+    
+	cmd="cp $OSSEC_RULES_TEMP $OSSEC_RULES"
+	$cmd
+	log_command "$?" "$cmd"
+
+    #Copying configuration template
+    cmd="mv $OSSEC_CONF $OSSEC_CONF.bak"
+    $cmd
+	log_command "$?" "$cmd"
+    
+    cmd="cp $OSSEC_CONF_TEMP $OSSEC_CONF"
+    $cmd
+	log_command "$?" "$cmd"
 	#Starts service
 	cmd="service ossec start"
 	$cmd
 	log_command "$?" "$cmd"
 }
 
-
+#####################################################################################################
 configure_f2b()
 {
 	echo                                          >> $LOG
@@ -420,8 +440,8 @@ configure_f2b()
 	jail="/etc/fail2ban/jail.local"
 
 	#Copies from jail.conf to jail.local all lines that are not commented
-	sed -e '/#.*$/d' -e '/^$/d' /templates/jail.conf > $jail
-	log_command "$?" "sed -e '/#.*$/d' -e '/^$/d' /etc/fail2ban/jail.conf > $jail"
+	sed -e '/#.*$/d' -e '/^$/d' $F2B_TEMP > $jail
+	log_command "$?" "sed -e '/#.*$/d' -e '/^$/d' $F2B_TEMP > $jail"
  
 	#Sets default bantime
 	sed -i "0,/\(bantime[ \t]*=\).*/s/\(bantime[ \t]*=\).*/\1 $bantime/" $jail
@@ -471,7 +491,7 @@ configure_f2b()
 	#If the ssh service is active, it is configured
 	if [ -n "$ssh_port" ];then
 	    echo "SSH Port:$ssh_port"
-	    sed -i "s/\(^port*=\)*SSH_PORT$/\1 $ssh_port /" jail.conf
+	    sed -i "s/\(^port*=\)*SSH_PORT$/\1 $ssh_port /" $jail
 	fi
 
 	#If the apache service is active, it is configured
@@ -487,7 +507,7 @@ configure_f2b()
 	        fi
 	    done
 	#    echo "Web Ports:$apache"
-	    sed -i "s/\(^port*=\)*APACHE_PORT$/\1 $apache /" jail.conf
+	    sed -i "s/\(^port*=\)*APACHE_PORT$/\1 $apache /" $jail
 	fi
 
 	#If the httpd service is active, it is configured
@@ -503,7 +523,7 @@ configure_f2b()
 	        fi
 	    done
 	#    echo "Web Ports:$httpd"
-	    sed -i "s/\(^port*=\)*APACHE_PORT$/\1 $httpd /" jail.conf
+	    sed -i "s/\(^port*=\)*APACHE_PORT$/\1 $httpd /" $jail
 	fi
 
 	#If the nginx service is active, it is configured
@@ -519,7 +539,7 @@ configure_f2b()
 	        fi
 	    done
 	#    echo "Nginx Ports:$nginx"
-	    sed -i "s/\(^port*=\)*NGINX_PORT$/\1 $httpd /" jail.conf
+	    sed -i "s/\(^port*=\)*NGINX_PORT$/\1 $httpd /" $jail
 	fi
 
 
@@ -549,7 +569,7 @@ configure_f2b()
 	log_command "$?" "$cmd"
 }
 
-
+#####################################################################################################
 #Installing and configuring logwatch
 configure_lw()
 {
@@ -602,7 +622,7 @@ configure_lw()
 	log_command "$?" "crontab -l | { cat; echo \"15 1 * * * /usr/sbin/logwatch\"; } | crontab -"
 }
 
-
+#####################################################################################################
 #Installing and configuring logcheck
 configure_lc()
 {
@@ -692,7 +712,7 @@ configure_lc()
 }
 
 #########################################
-#	Starts the installation		#
+#	Starts the installation		        #
 #########################################
 
 user_install
@@ -723,8 +743,6 @@ if [[ $serv == *"fail2ban"* ]]; then
 else
 	configure_f2b "$distribution"
 fi
-
-
 
 #Checks if LOGWATCH program is installed and if not, configures it
 lw=$(which logwatch)
