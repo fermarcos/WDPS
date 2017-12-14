@@ -1,28 +1,30 @@
 #!/bin/bash
 
-####################################################################
-# Bash script to install ModSecurity. For Debian 8, 9, Ubuntu 14, 16 , 17 and CentOS 6, 7 systems.
-# Written by Fernando Marcos Parra Arroyo
-# Requirements:
-#	Internet Connection
-#	User Root
-####################################################################
+##########################################################################
+### Bash script to install ModSecurity. For Debian 8, 9, Ubuntu 14, 16 ###
+### 17 and CentOS 6, 7 systems.                                        ###
+### Written by Fernando Marcos Parra Arroyo                            ###
+### Requirements:                                                      ###
+###	Internet Connection                                                ###
+###	User Root                                                          ###
+##########################################################################
 
-#LogFile
-LOG="`pwd`/installModSecurity.log"
+#==========================================#
+	#LogFile
+	LOG="`pwd`/../log/installModSecurity.log"
 
-#COLORS
-# Reset
-Color_Off='\033[0m'       # Text Reset
+	#COLORS
+	Color_Off='\033[0m'       # Text Reset
+	# Regular Colors
+	Red='\033[0;31m'          # Red
+	Green='\033[0;32m'        # Green
+	Yellow='\033[0;33m'       # Yellow
+	Purple='\033[0;35m'       # Purple
+	Cyan='\033[0;36m'         # Cyan
+#==========================================#
 
-# Regular Colors
-Red='\033[0;31m'          # Red
-Green='\033[0;32m'        # Green
-Yellow='\033[0;33m'       # Yellow
-Purple='\033[0;35m'       # Purple
-Cyan='\033[0;36m'         # Cyan
 
-
+###################################################################
 #Checking root permissions
 check_user()
 {
@@ -34,7 +36,7 @@ check_user()
 		exit 1
 	fi
 }
-
+###################################################################
 #Writes in log file the command and if it was correct or not
 log_command()
 {
@@ -45,7 +47,7 @@ log_command()
 		echo "[`date +"%F %X"`] : $2 : [OK]" 	>> $LOG
 	fi
 }
-
+###################################################################
 #Banner that inits log file
 banner_log()
 {
@@ -104,7 +106,7 @@ banner_log()
 	echo -e "$Cyan \nDetecting Distribution..\n $Color_Off"
 	sleep 5
 }
-
+###################################################################
 #Exits if script failed
 exit_install()
 {
@@ -116,7 +118,7 @@ exit_install()
 	echo
 	exit 1
 }
-
+###################################################################
 #Detecting Distribution
 check_distribution()
 {
@@ -150,7 +152,7 @@ check_distribution()
 	        echo "Ubuntu 17"
 	fi
 }
-
+###################################################################
 #Installing dependencies
 #Modifies sources.list file to install the packages
 install_dependencies_apache()
@@ -179,6 +181,7 @@ install_dependencies_apache()
 	fi
 
 }
+###################################################################
 #Installing Modsecurity
 install_modsecurity_apache()
 {
@@ -248,7 +251,7 @@ install_modsecurity_apache()
 	fi
 
 }
-
+###################################################################
 
 configuring_rules()
 {
@@ -388,6 +391,7 @@ configuring_rules()
 		fi
 	fi
 }
+###################################################################
 
 #Running functions
 check_user
