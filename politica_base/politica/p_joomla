@@ -1,0 +1,5 @@
+200004:Multipart parser detecte a posible unmatchet Bool:No permite cargar archivos zip para cambiar plantillas
+941160:NoScript XSS filters:No permite agregar imagenes
+933100:PHP Injection Attack:No permite agregar modulos de PHP
+941100:XSS Attack Detect via libinjection:No permite insertar videos de youtube
+942100:SQL Injection Attack Detect via libinjection:No permite insertar archivos PDF
