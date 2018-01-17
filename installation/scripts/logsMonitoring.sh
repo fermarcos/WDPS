@@ -324,10 +324,33 @@ configure_ossec()
 	$cmd
 	log_command "$?" "$cmd"
 
-	#Installation type = local	
-	sed -i 's/^#\(USER_INSTALL_TYPE="local"\)/\1/' etc/preloaded-vars.conf
-	log_command "$?" "sed -i 's/^#\(USER_INSTALL_TYPE=\"local\"\)/\1/' etc/preloaded-vars.conf"
-	
+
+	option=true
+	while [ $option == true ]
+	do
+	    read -p "Select the installation type [server|agent|local]: " mode
+	    if [[ "$mode" == *"local"*  ]];  then
+	        #Installation type = local
+	        sed -i 's/^#\(USER_INSTALL_TYPE="local"\)/\1/' etc/preloaded-vars.conf
+	        log_command "$?" "sed -i 's/^#\(USER_INSTALL_TYPE=\"local\"\)/\1/' etc/preloaded-vars.conf"
+	        option=false
+	    elif [[ "$mode" = *"agent"* ]]; then
+	        #Installation type = local
+	        sed -i 's/^#\(USER_INSTALL_TYPE="agent"\)/\1/' etc/preloaded-vars.conf
+	        log_command "$?" "sed -i 's/^#\(USER_INSTALL_TYPE=\"local\"\)/\1/' etc/preloaded-vars.conf"
+	        option=false
+	    elif [[ "$mode" = *"server"* ]]; then
+	        #Installation type = local
+	        sed -i 's/^#\(USER_INSTALL_TYPE="server"\)/\1/' etc/preloaded-vars.conf
+	        log_command "$?" "sed -i 's/^#\(USER_INSTALL_TYPE=\"local\"\)/\1/' etc/preloaded-vars.conf"
+	        option=false
+	    else
+	        echo "Enter a valid option."
+	    fi
+	done
+	echo "Mode installation $mode"
+
+
 	#Installation directory = /var/ossec
 	sed -i 's~^#\(USER_DIR="/var/ossec"\)~\1~' etc/preloaded-vars.conf
 	log_command "$?" "sed -i 's~^#\(USER_DIR=\"/var/ossec\"\)~\1~' etc/preloaded-vars.conf"
@@ -383,6 +406,46 @@ configure_ossec()
 	cmd="service ossec start"
 	$cmd
 	log_command "$?" "$cmd"
+
+
+while [[ "$webconsole" != "y"  &&  "$webconsole" != "n" ]] 
+do
+    read -p "Do you want to install the web console? [y/n]: " webconsole
+    if [[ "$webconsole" == *"y"*  ]];  then
+        while [ ! -d "$webpath"  ]
+        do
+            read -p "Enter the pathh: " webpath
+        done
+        #Installing the web console OSSEC
+        cmd="echo '$webpath/ossec-wui'" 
+        $cmd
+        log_command "$?" "$cmd"
+
+        cmd="git clone https://github.com/ossec/ossec-wui.git"
+        $cmd
+        log_command "$?" "$cmd"
+
+        cmd="mv ossec-wui* $webpath/ossec-wui"
+        $cmd
+        log_command "$?" "$cmd"
+
+        cmd="cd $webpath/ossec-wui"
+        $cmd
+        log_command "$?" "$cmd"
+
+        cmd="./setup.sh"
+        $cmd
+        log_command "$?" "$cmd"
+
+    elif [[ "$webconsole" = *"n"* ]]; then
+        echo "CONTINUA"
+    else 
+        echo "Enter a valid option."
+    fi
+done
+
+
+
 }
 
 #####################################################################################################
