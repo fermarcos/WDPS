@@ -19,7 +19,12 @@
 	OSSEC_RULES_TEMP="`pwd`/../templates/local_rules.xml"	
 	OSSEC_CONF="/var/ossec/etc/ossec.conf"
 	OSSEC_RULES="/var/ossec/rules/local_rules.xml"
+	OSSEC_SITE_APACHE="`pwd`/../templates/site_ossec_apache.conf"
+	OSSEC_SITE_NGINX="`pwd`/../templates/site_ossec_nginx.conf"
 	F2B_TEMP="`pwd`/../templates/jail.conf"
+	SITES_APACHE="/etc/apache2/sites-available"
+	SITES_NGINX="/etc/nginx/sites-available"
+	ALIASES="/etc/aliases"
 
 	userName=`whoami`
 	repositoryChange=0
@@ -276,6 +281,21 @@ end_repository()
 	fi
 }
 #####################################################################################################
+#Setting the administrator email
+configure_alias()
+{	
+	echo -n "Enter the administrator email address and press [ENTER]: "
+	read mail
+	#echo $mail
+	alias=`grep "^root.*:.*\$mail.*" $ALIASES`
+	if [ "$alias" ];then
+	    echo "Alias already exists"
+	else
+	    echo "root: $mail" >> $ALIASES
+	    newaliases
+	fi
+}
+#####################################################################################################
 #Installs and configures OSSEC
 configure_ossec()
 {
@@ -436,6 +456,26 @@ do
         cmd="./setup.sh"
         $cmd
         log_command "$?" "$cmd"
+
+
+        apache2 -v 2> /dev/null
+        apache=$?
+        nginx -v 2> /dev/null
+        nginx=$?
+    	
+        if [[ "$apache" == 0 ]]; then
+                sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_APACHE
+                cp $OSSEC_SITE_APACHE "$SITES_APACHE/site_ossec_apache.conf"
+                a2ensite site_ossec_apache.conf
+                /etc/init.d/apache2 reload
+        fi
+        if [[ "$nginx" == 0 ]]; then
+        		sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_NGINX
+                cp $OSSEC_SITE_APACHE "$SITES_NGINX/site_ossec_nginx.conf"
+                ln -s $SITES_NGINX/site_ossec_nginx.conf /etc/nginx/sites-enabled/site_ossec_nginx.conf
+                /etc/init.d/nginx reload
+        fi
+
 
     elif [[ "$webconsole" = *"n"* ]]; then
         echo "CONTINUA"
@@ -788,6 +828,7 @@ else
 	list_services="service --status-all"
 fi
 
+
 #Checks if OSSEC service is installed and if not, configures it
 serv=$($list_services | grep 'ossec')
 if [[ $serv == *"ossec"* ]]; then
@@ -825,3 +866,6 @@ if [[ $lw == *"logcheck"*  ]]; then
 else
 	configure_lc "$distribution"
 fi
+
+#Create an alias for tye administraot email
+configure_alias
