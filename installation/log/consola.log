@@ -1,0 +1,17 @@
+######################################
+###   cliente_consola_install     ####
+######################################
+______________________________________
+Started @ [Mon Jan 15 01:30:06 CST 2018]
+
+
+[2018-01-15 01:30:07 AM] - [cliente_consola_install | INSTALL_CLIENTE_CONSOLA]   Installing cliente_consola 
+[2018-01-15 01:31:56 AM] - [cliente_consola_install | EXEC_CMD]  The command cliente_consola apt-get install openssh-client sshpass -y has been executed OK
+[2018-01-15 01:32:12 AM] - [cliente_consola_install | EXEC_CMD]  The command CONFIGURE read IP_SERVER has been executed OK
+############################################
+[2018-01-15 01:32:13 AM] - [cliente_consola_install | END_INSTALL]  The installation of AWStats has been completed
+############################################
+
+
+diana.arrieta@cert.unam.mx
+fernando.parra@cert.unam.mx
