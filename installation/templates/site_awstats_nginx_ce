@@ -1,15 +1,15 @@
-server {
+server {        
 		location ~ \.php$
         {
                 include /etc/nginx/fastcgi_params;
                 fastcgi_pass 127.0.0.1:9000;
                 fastcgi_index index.php;
-                fastcgi_param SCRIPT_FILENAME /usr/share/nginx/estadisticas/awstats$fastcgi_script_name;
+                fastcgi_param SCRIPT_FILENAME /var/www/estadisticas/awstats$fastcgi_script_name;
         }
 
         listen 2292;
 
-        root /usr/share/nginx/estadisticas/awstats;
+        root /var/www/estadisticas/awstats;
         index index.html;
 
         auth_basic "Introduzca su usuario y contraseña";
@@ -21,6 +21,6 @@ server {
         ssl_certificate /etc/ssl/estadisticas.crt;
         ssl_certificate_key /etc/ssl/estadisticas.key;
 		
-		access_log /usr/share/nginx/estadisticas/access.log;
-        error_log /usr/share/nginx/estadisticas/error.log;
+		access_log /var/www/estadisticas/access.log;
+        error_log /var/www/estadisticas/error.log;
 }
