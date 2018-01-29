@@ -13,7 +13,7 @@ import gzip
 import csv
 import re
 import urllib
-from datetime import datetime
+from datetime import datetime,date
 from collections import defaultdict
 from itertools import chain
 import plotly
@@ -324,11 +324,11 @@ def checkServices(distro):
 def setGlobalConf(exec_conf):
     global verbose
     verbose = exec_conf['verbose']
-    with open(exec_conf['output'],'w') as r :
+    with open(exec_conf['output']+'_'+str(date.today())+'.txt','w') as r :
         r.write('Log AnalyCERT v2.0\n\n')
-    with open(exec_conf['output']+'.ips','w') as r :
+    with open(exec_conf['output']+'_'+str(date.today())+'.ips','w') as r :
         pass
-    with open(exec_conf['output']+'.ev','w') as r :
+    with open(exec_conf['output']+'_'+str(date.today())+'.ev','w') as r :
         r.write('Log AnalyCERT v2.0')
 
 
@@ -521,7 +521,7 @@ def parseLine(log_type, line, attack_rules):
 
 }
     reg = re.match(log_regex[log_type], line)
-
+    print reg.group('ip')
     if reg is not None:
 #        print "%s\t\t%s\t%s\t%s\t%s\t%s" % (reg.group('ip'), reg.group('date'), reg.group('request'), reg.group('code'), reg.group('name'), reg.group('agent'))
         attack = findAttack(attack_rules, reg, log_type)
@@ -984,8 +984,8 @@ def makeGraphs(values,labels,values1,labels1,values2,labels2,name,name2,name3,se
             ]
         }
     }
-    plotly.offline.plot(fig, filename='report_'+service+'.html', auto_open=False)
-    print color.Green + '\treport_'+service+'.html has been created.' + color.Color_off
+    plotly.offline.plot(fig, filename='report_'+service+'_'+str(date.today())+'.html', auto_open=False)
+    print color.Green + '\treport_'+service+'_'+str(date.today())+'.html has been created.' + color.Color_off
 
 
 
@@ -1003,7 +1003,7 @@ def reportResults(service, attacks_conf, output, graph):
     values2 = []
     countries = {}
 
-    with open(output, 'a') as out, open(output+'.ev','a') as evd:
+    with open(output+'_'+str(date.today())+'.txt', 'a') as out, open(output+'_'+str(date.today())+'.ev','a') as evd:
         out.write('\n\n%s%sReport for %s\n%s\n\n' % ('+-'*50+'\n', '\t'*4, service, '+-'*50))
         out.write('\nStart time: %s\n' % ('\t'+str(start_time)))
         out.write('End time: %s\n' % ('\t'+str(datetime.utcnow())))
@@ -1345,15 +1345,15 @@ def filterAnalysis(opts, logs, rules, rot_conf):
         checkLogFiles(logs['mail_log'])
         openLogs('mail_log', logs['mail_log'], attack_rules, rot_conf)
         reportResults('mail', f_attacks, opts['output'], opts['graph'])
-    print color.Green+'\n'+opts['output']+' has been created'+color.Color_off
-    print color.Green+opts['output']+'.ev has been created'+color.Color_off
+    print color.Green+'\n'+opts['output']+'_'+str(date.today())+'.txt'+' has been created'+color.Color_off
+    print color.Green+opts['output']+'_'+str(date.today())+'.ev has been created'+color.Color_off
 
 #Opens a file so the attackes IP addresses can be written in it
 def writeIPToFile(output):
-    with open(output+'.ips', 'w') as o:
+    with open(output+'_'+str(date.today())+'.ips', 'w') as o:
         for ip in ips:
             o.write(ip+'\n')
-    print color.Green+output+'.ips has been created'+color.Color_off
+    print color.Green+output+'_'+str(date.today())+'.ips has been created'+color.Color_off
 
 
 #Start point
