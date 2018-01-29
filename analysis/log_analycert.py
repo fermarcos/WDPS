@@ -521,7 +521,6 @@ def parseLine(log_type, line, attack_rules):
 
 }
     reg = re.match(log_regex[log_type], line)
-    print reg.group('ip')
     if reg is not None:
 #        print "%s\t\t%s\t%s\t%s\t%s\t%s" % (reg.group('ip'), reg.group('date'), reg.group('request'), reg.group('code'), reg.group('name'), reg.group('agent'))
         attack = findAttack(attack_rules, reg, log_type)
