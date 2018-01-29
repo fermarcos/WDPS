@@ -16,21 +16,24 @@
 ####################################################
 
 #==========================================#
-	DIRECTORIO="`pwd`/src"
 	LOG="`pwd`/../log/Webalizer_install.log"	
 	USER=`whoami`	
 	DISTR="`cat /etc/*release`"
 	UNAME="`uname -a`"
 	
 	LOG_APACHE="/var/log/apache2/"
+	LOG_HTTPD="/var/log/httpd"
 	SITES_APACHE="/etc/apache2/sites-available"
+	SITES_HTTPD="/etc/httpd/sites-available"
 	WEBALIZER_APACHE_CONF="`pwd`/../templates/site_webalizer_apache.conf"
+	WEBALIZER_HTTPD_CONF="`pwd`/../templates/site_webalizer_httpd.conf"
+
 	TEMPLATES="`pwd`/../templates"
-	WEBALIZER_URL="`pwd`/../webalizer_url"
 	
 	LOG_NGINX="/var/log/nginx/"
 	SITES_NGINX="/etc/nginx/sites-available"
 	WEBALIZER_NGINX_CONF="`pwd`/../templates/site_webalizer_nginx_du"
+	WEBALIZER_NGINX_CONF_CENTOS="`pwd`/../templates/site_webalizer_nginx_ce"
 	
 #==========================================#
 
@@ -89,9 +92,17 @@ install_web()
 	apache=$?
 	nginx -v 2> /dev/null
 	nginx=$?
+	httpd -v 2> /dev/null
+	httpd=$?
+	which webalizer 2> /dev/null
+	web=$?
 	
-	if [[ "$apache" == 127 && "$nginx" == 127 ]]; then
+	if [[ "$apache" == 127 && "$nginx" == 127  && "$httpd" == 127 ]]; then
 			echo "You don't have install a web server (Apache o Nginx)"
+			exit 1
+	fi
+	if [[ "$web" == 0 ]]; then
+			echo "You have install webalizer"
 			exit 1
 	fi
 	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
@@ -100,15 +111,12 @@ install_web()
 		$cmd
 		exec_cmd $? "Webalizer $cmd"
 	fi
-	#if [[ "$DISTR" == *"CentOS"* ]]; then
-	#	echo " ----  Install Webalizer ----"
-	#	echo " ----  Install Webalizer ----" >> $LOG
-	#	if [[ "$UNAME"=*"x86_64"* ]]; then
-	#		cd `pwd`/../rpm
-	#		rpm -Uhv rpmforge-release-0.5.3-1.el5.rf.x86_64.rpm
-	#		yum -y install Webalizer httpd-tools
-	#	fi
-	#fi
+	if [[ "$DISTR" == *"CentOS"* ]]; then
+		echo "[`date +"%F %X"`] - [Webalizer_install | INSTALL_WEBALIZER]   Installing Webalizer " >> $LOG
+		cmd="yum -y install webalizer httpd-tools mod_ssl"
+		$cmd
+		exec_cmd $? "Webalizer $cmd"
+	fi
 }
 #####################################################################################################
 configure_web()
@@ -117,13 +125,14 @@ configure_web()
 	apache=$?
 	nginx -v 2> /dev/null
 	nginx=$?
-	#httpd=
+	httpd -v 2> /dev/null
+	httpd=$?
 		
-	if [[ "$apache" == 0 ]]; then
-			configure_web_apache
-	fi
 	if [[ "$nginx" == 0 ]]; then
-			configure_web_nginx
+			configure_web_nginx 	
+			
+		elif [[ "$apache" == 0 || "$httpd" == 0 ]]; then
+			configure_web_apache
 	fi
 }
 #####################################################################################################
@@ -131,8 +140,6 @@ configure_web_apache()
 {
 	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
 		echo "[`date +"%F %X"`] - [Webalizer_install | CONFIGURE_Webalizer]   Configuring Webalizer " >> $LOG
-		echo "Sitio 	URL" >> $WEBALIZER_URL
-		echo " "			 >> $WEBALIZER_URL	
 		
 		cmd="cd $LOG_APACHE"
 		$cmd
@@ -167,32 +174,28 @@ configure_web_apache()
 				
 				webalizer -c /etc/webalizer/webalizer.$sitio.conf -d
 				
-				#----------- Configuracion Apache2 ---------
-				
-				cmd="cp $WEBALIZER_APACHE_CONF $SITES_APACHE/webalizer.$sitio.conf"
-				$cmd
-				exec_cmd $? "CONFIGURE APACHE $cmd"
-				
-				cmd="sed -i s/SITIO/$sitio/g $SITES_APACHE/webalizer.$sitio.conf"
-				$cmd
-				exec_cmd $? "CONFIGURE APACHE $cmd"
-				
-				cmd="a2ensite webalizer.$sitio.conf"
-				$cmd
-				exec_cmd $? "CONFIGURE APACHE $cmd"
-				
 				echo "* * * * * root webalizer -c /etc/webalizer/webalizer.$sitio.conf -d" >> /etc/crontab
-				
-				echo "127.0.0.1 webalizer.$sitio.com" >> /etc/hosts
-				
-				echo "$sitio -> webalizer.$sitio.com:2293" >> $WEBALIZER_URL 
-				
+
 				cmd="cd $LOG_APACHE"
 				$cmd
-				exec_cmd $? "CONFIGURE APACHE $cmd"	
+				exec_cmd $? "CONFIGURE APACHE $cmd"					
 				
 		done
 		
+		#----------- Configuracion Apache2 ---------
+				
+		cmd="cp $WEBALIZER_APACHE_CONF $SITES_APACHE/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+		cmd="sed -i s/SITIO/$sitio/g $SITES_APACHE/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+		cmd="a2ensite webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+				
 		echo "Usuario para acceder a estadisticas: " >> $LOG			
 		echo "Usuario para acceder a estadisticas: "
 		
@@ -206,16 +209,107 @@ configure_web_apache()
 		
 		echo "Listen 2293" >> /etc/apache2/ports.conf
 		
+		cmd="a2enmod ssl"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+		
+		cmd="cp -f $TEMPLATES/estadisticas.* /etc/ssl/"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+		
+		cmd="cp -rf $TEMPLATES/webalizer/* /var/www/estadisticas/webalizer/"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+		
 		service apache2 restart
 		
+	fi
+	
+	if [[ "$DISTR" == *"CentOS"* ]]; then
+	
+		echo "[`date +"%F %X"`] - [Webalizer_install | CONFIGURE_Webalizer]   Configuring Webalizer " >> $LOG
+		
+		cmd="cd $LOG_HTTPD"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"		
+
+		num_logs=`ls *access*log | wc -l`
+		count=0
+				
+		while  [ $count -lt $num_logs ]; do
+				let count=count+1
+				log=`ls -1 *access*log | sed -n $count'p'`
+				sitio="${log//_/.}"
+
+				# Copia del archivo de configuracion  webalizer.conf
+				
+				cmd="cp /etc/webalizer.conf /etc/webalizer.$sitio.conf"
+				$cmd
+				exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+				config_file=/etc/webalizer.$sitio.conf				
+				cmd="sed -i s/access.log/$log/g $config_file"
+				$cmd
+				exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+				cmd="sed -i s/\/var\/www\/usage/\/var\/www\/estadisticas\/webalizer\/webalizer.$sitio/g $config_file"
+				$cmd
+				exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+				cmd="mkdir -p /var/www/estadisticas/webalizer/webalizer.$sitio"
+				$cmd
+				exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+				webalizer -c /etc/webalizer.$sitio.conf -d
+				
+				echo "* * * * * root webalizer -c /etc/webalizer/webalizer.$sitio.conf -d" >> /etc/crontab
+
+				cmd="cd $LOG_HTTPD"
+				$cmd
+				exec_cmd $? "CONFIGURE APACHE $cmd"					
+				
+		done
+		
+		#----------- Configuracion Apache2 ---------
+		
+		mkdir /etc/httpd/sites-available
+		rm -f /etc/httpd/conf.d/webalizer.conf
+				
+		cmd="cp $WEBALIZER_HTTPD_CONF /etc/httpd/sites-available/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+			
+		cmd="ln -s /etc/httpd/sites-available/webalizer.conf /etc/httpd/conf.d/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+				
+		echo "Usuario para acceder a estadisticas: " >> $LOG			
+		echo "Usuario para acceder a estadisticas: "
+		
+		cmd="read us"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+		
+		cmd="htpasswd -c /etc/httpd/auth_users_webalizer $us"
+		$cmd
+		exec_cmd $? "CONFIGURE APACHE $cmd"
+		
+		cmd="cp -rf $TEMPLATES/webalizer/* /var/www/estadisticas/webalizer/"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"
+		
+		
+		#echo "Listen 2293" >> /etc/apache2/ports.conf
+		
+		service httpd restart
 	fi
 }
 #####################################################################################################
 configure_web_nginx()
 {
 	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
+	
 		echo "[`date +"%F %X"`] - [Webalizer_install | CONFIGURE_WEBALIZER]   Configuring Webalizer " >> $LOG
-		echo -e "\nWebalizer for nginx\n\nSitio 	URL\n" >> $WEBALIZER_URL
 		
 		cmd="cd $LOG_NGINX"
 		$cmd
@@ -225,57 +319,49 @@ configure_web_nginx()
 		count=0
 				
 		while  [ $count -lt $num_logs ]; do
-				let count=count+1
-				log=`ls -1 *access*log | sed -n $count'p'`
-				sitio="${log//_/.}"
-				
-				# Copia del archivo de configuracion  Webalizer.conf
-				
-				cmd="cp /etc/webalizer/webalizer.conf /etc/webalizer/webalizer.$sitio.conf"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"	
-				
-				config_file=/etc/webalizer/webalizer.$sitio.conf				
-				cmd="sed -i s/apache2\/access.log.1/nginx\/$log/g $config_file"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"	
+			let count=count+1
+			log=`ls -1 *access*log | sed -n $count'p'`
+			sitio="${log//_/.}"
+			
+			# Copia del archivo de configuracion  Webalizer.conf
+			
+			cmd="cp /etc/webalizer/webalizer.conf /etc/webalizer/webalizer.$sitio.conf"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+			config_file=/etc/webalizer/webalizer.$sitio.conf				
+			cmd="sed -i s/apache2\/access.log.1/nginx\/$log/g $config_file"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
 
-				cmd="sed -i s/\/var\/www\/webalizer/\/var\/www\/estadisticas\/webalizer\/webalizer.$sitio/g $config_file"
-				$cmd
-				exec_cmd $? "CONFIGURE APACHE $cmd"				
-				
-				cmd="mkdir -p /var/www/estadisticas/webalizer/webalizer.$sitio"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"	
-				
-				webalizer -c /etc/webalizer/webalizer.$sitio.conf -d
-				
-				#----------- Configuracion Apache2 ---------
-				
-				cmd="cp $WEBALIZER_NGINX_CONF $SITES_NGINX/webalizer.$sitio"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"	
-				
-				cmd="sed -i s/SITIO/$sitio/g $SITES_NGINX/webalizer.$sitio"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"	
-				
-				cmd="ln -s $SITES_NGINX/webalizer.$sitio /etc/nginx/sites-enabled/webalizer.$sitio"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"	
-				
-				echo "* * * * * root webalizer -c /etc/webalizer/webalizer.$sitio.conf -d " >> /etc/crontab
-				
-				echo "127.0.0.1 webalizer.$sitio.com" >> /etc/hosts
-				
-				echo "$sitio -> webalizer.$sitio.com:2293" >> $WEBALIZER_URL 
-				
-				cmd="cd $LOG_NGINX"
-				$cmd
-				exec_cmd $? "CONFIGURE NGINX $cmd"		
-				
+			cmd="sed -i s/\/var\/www\/webalizer/\/usr\/share\/nginx\/estadisticas\/webalizer\/webalizer.$sitio/g $config_file"
+			$cmd
+			exec_cmd $? "CONFIGURE APACHE $cmd"				
+			
+			cmd="mkdir -p /usr/share/nginx/estadisticas/webalizer/webalizer.$sitio"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+			webalizer -c /etc/webalizer/webalizer.$sitio.conf -d	
+
+			echo "* * * * * root webalizer -c /etc/webalizer/webalizer.$sitio.conf -d " >> /etc/crontab
+			
+			cmd="cd $LOG_NGINX"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
 		done
 		
+		#----------- Configuracion Nginx ---------
+			
+		cmd="cp $WEBALIZER_NGINX_CONF $SITES_NGINX/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+		cmd="ln -s $SITES_NGINX/webalizer.conf /etc/nginx/conf.d/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
 		echo "Usuario para acceder a estadisticas: " >> $LOG			
 		echo "Usuario para acceder a estadisticas: "
 		
@@ -287,22 +373,111 @@ configure_web_nginx()
 		$cmd
 		exec_cmd $? "CONFIGURE NGINX $cmd"	
 		
+		cmd="cp -f $TEMPLATES/estadisticas.* /etc/ssl/"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"
+		
+		cmd="cp -rf $TEMPLATES/webalizer/* /usr/share/nginx/estadisticas/webalizer/"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"
+		
 		service nginx restart
 		
+	fi
+	
+	if [[ "$DISTR" == *"CentOS"* ]]; then
+	
+		echo "[`date +"%F %X"`] - [Webalizer_install | CONFIGURE_WEBALIZER]   Configuring Webalizer " >> $LOG
+		
+		cmd="cd $LOG_NGINX"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"		
+
+		num_logs=`ls *access*log | wc -l`
+		count=0
+				
+		while  [ $count -lt $num_logs ]; do
+			let count=count+1
+			log=`ls -1 *access*log | sed -n $count'p'`
+			sitio="${log//_/.}"
+			
+			# Copia del archivo de configuracion  Webalizer.conf
+			
+			cmd="cp /etc/webalizer.conf /etc/webalizer.$sitio.conf"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+			config_file=/etc/webalizer.$sitio.conf				
+			cmd="sed -i s/httpd\/access.log/nginx\/$log/g $config_file"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+
+			cmd="sed -i s/\/var\/www\/usage/\/var\/www\/estadisticas\/webalizer\/webalizer.$sitio/g $config_file"
+			$cmd
+			exec_cmd $? "CONFIGURE APACHE $cmd"				
+			
+			cmd="mkdir -p /var/www/estadisticas/webalizer/webalizer.$sitio"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+			webalizer -c /etc/webalizer.$sitio.conf -d	
+
+			echo "* * * * * root webalizer -c /etc/webalizer.$sitio.conf -d " >> /etc/crontab
+			
+			cmd="cd $LOG_NGINX"
+			$cmd
+			exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+		done
+		
+		#----------- Configuracion Nginx ---------
+		
+		mkdir /etc/nginx/sites-available
+		rm -f /etc/nginx/conf.d/webalizer.conf
+			
+		cmd="cp -rf $WEBALIZER_NGINX_CONF_CENTOS /etc/nginx/sites-available/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+			
+		cmd="ln -s /etc/nginx/sites-available/webalizer.conf /etc/nginx/conf.d/webalizer.conf"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"
+			
+		echo "Usuario para acceder a estadisticas: " >> $LOG			
+		echo "Usuario para acceder a estadisticas: "
+		
+		cmd="read us"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+		
+		cmd="htpasswd -c /etc/nginx/auth_users_webalizer $us"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"	
+		
+		cmd="cp -f $TEMPLATES/estadisticas.* /etc/ssl/"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"
+		
+		cmd="cp -rf $TEMPLATES/webalizer/* /var/www/estadisticas/webalizer/"
+		$cmd
+		exec_cmd $? "CONFIGURE NGINX $cmd"
+		
+		service nginx restart
+	
 	fi
 }
 #####################################################################################################
 banner_log()
 {
 	echo "######################################" >  $LOG
-	echo "###     WEBALIZER INSTALLATION      ####" >> $LOG
+	echo "###     WEBALIZER INSTALLATION    ####" >> $LOG
 	echo "######################################" >> $LOG
 	echo "______________________________________" >> $LOG
 	echo "Started @ [`date`]"                     >> $LOG
 	echo                                          >> $LOG
 	echo                                          >> $LOG
 	echo "######################################" 
-	echo "###     WEBALIZER INSTALLATION      ####"
+	echo "###     WEBALIZER INSTALLATION    ####"
 	echo "######################################"
 	echo "______________________________________"
 	echo "Started @ [`date`]"                    
