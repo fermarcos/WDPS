@@ -463,19 +463,18 @@ do
         nginx -v 2> /dev/null
         nginx=$?
     	
-        if [[ "$apache" == 0 ]]; then
-                sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_APACHE
-                cp $OSSEC_SITE_APACHE "$SITES_APACHE/site_ossec_apache.conf"
-                a2ensite site_ossec_apache.conf
-                /etc/init.d/apache2 reload
-        fi
-        if [[ "$nginx" == 0 ]]; then
-        		sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_NGINX
-                cp $OSSEC_SITE_APACHE "$SITES_NGINX/site_ossec_nginx.conf"
-                ln -s $SITES_NGINX/site_ossec_nginx.conf /etc/nginx/sites-enabled/site_ossec_nginx.conf
-                /etc/init.d/nginx reload
-        fi
-
+		apache2 -v 2> /dev/null
+		apache=$?
+		nginx -v 2> /dev/null
+		nginx=$?
+		httpd -v 2> /dev/null
+		httpd=$?
+			
+		if [[ "$nginx" == 0 ]]; then
+			configure_web_nginx 			
+		elif [[ "$apache" == 0 || "$httpd" == 0 ]]; then
+			configure_web_apache
+		fi
 
     elif [[ "$webconsole" = *"n"* ]]; then
         echo "CONTINUA"
@@ -483,11 +482,42 @@ do
         echo "Enter a valid option."
     fi
 done
-
-
-
 }
 
+
+configure_web_apache()
+{
+	DISTR="`cat /etc/*release`"
+	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
+	    sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_APACHE
+	    cp $OSSEC_SITE_APACHE "$SITES_APACHE/site_ossec_apache.conf"
+	    a2ensite site_ossec_apache.conf
+	    /etc/init.d/apache2 reload
+	fi
+	if [[ "$DISTR" == *"CentOS"* ]]; then
+		sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_APACHE
+		mkdir /etc/httpd/sites-available
+		cp $OSSEC_SITE_APACHE /etc/httpd/sites-available/site_ossec_apache.conf
+		ln -s /etc/httpd/sites-available/site_ossec_apache.conf /etc/httpd/conf.d/site_ossec_apache.conf
+	fi
+}
+
+configure_web_nginx()
+{
+	DISTR="`cat /etc/*release`"
+	if [[ "$DISTR" == *"Ubuntu"* || "$DISTR" == *"Debian"* ]]; then
+		sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_NGINX
+	    cp $OSSEC_SITE_APACHE "$SITES_NGINX/site_ossec_nginx.conf"
+	    ln -s $SITES_NGINX/site_ossec_nginx.conf /etc/nginx/sites-enabled/site_ossec_nginx.conf
+	    /etc/init.d/nginx reload
+	fi
+	if [[ "$DISTR" == *"CentOS"* ]]; then
+		sed -i "s@WEBFOLDER@$webpath@" $OSSEC_SITE_NGINX
+		mkdir /etc/nginx/sites-available
+		cp $OSSEC_SITE_NGINX /etc/nginx/sites-available/site_ossec_nginx.conf	
+		ln -s $SITES_NGINX/site_ossec_nginx.conf /etc/nginx/conf.d/site_ossec_nginx.conf
+	fi
+}
 #####################################################################################################
 configure_f2b()
 {
