@@ -1172,7 +1172,7 @@ def reportResults(service, attacks_conf, output, graph):
                 if x[0] is not None:
                     out.write("\tIP: %s Retries: %s Date: %s Country: %s\n" % (x[0]+'    \t', str(failedTries[x])+'\t', x[1]+'\t', getCountry(x[0]) ))
             for x in top:
-                if failedTries[x] > bf_tries:
+                if failedTries[x] > rules['bf_tries']:
                         ips.add(x[0])    
 
             for x in ssh_evidence:
