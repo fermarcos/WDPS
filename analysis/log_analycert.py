@@ -82,7 +82,7 @@ failure_USRS = {}
 failedTries = {}
 failed_attempts = 0
 logs = {}
-sshTries = 20
+ssh_evidence = []
 #variables used to count in the postgresql logs
 failedTries = {}
 error_logs = {}
@@ -600,13 +600,15 @@ def analyzeMailLogs(log_file):
             if re.search("relay=local.+status=sent",line):
                 count_received += 1
             if re.search("qmgr.+from=<",line):
-                remitente = re.search("(from=<)(.+)(>,)",line).group(2)
-                if remitente  is not None: senders_dict[remitente] = senders_dict.get(remitente , 0) + 1
+                if re.search("(from=<)(.+)(>,)",line) is not None:
+                    remitente = re.search("(from=<)(.+)(>,)",line).group(2)
+                    if remitente  is not None: senders_dict[remitente] = senders_dict.get(remitente , 0) + 1
             if re.search("reject",line):
                 count_rejected += 1
                 if re.search("from=<",line) is not None:
-                    rejected = re.search("(from=<)(.+)(> to=)",line).group(2)
-                    if rejected  is not None: rejected_dict[rejected] = rejected_dict.get(rejected , 0) + 1
+                    if re.search("(from=<)(.+)(> to=)",line).group(2) is not None
+                        rejected = re.search("(from=<)(.+)(> to=)",line).group(2)
+                        if rejected  is not None: rejected_dict[rejected] = rejected_dict.get(rejected , 0) + 1
             if re.search("Insufficiented system storage",line):
                 count_inSysStorage += 1
 
@@ -718,6 +720,7 @@ def analyzeSshLogs(log_file):
     global failedTries
     global failed_attempts
     global logs
+    global ssh_evidence
 
     for line in log_file.readlines():
         lines = lines +1
@@ -749,7 +752,7 @@ def analyzeSshLogs(log_file):
                 logs[usr].ips.append(ip)
             logs[usr].fail_logs.append(line.rstrip('\n'))
             logs[usr].logs.append(line.rstrip('\n'))
-
+            ssh_evidence.append(line)
 
         elif ":auth): authentication failure;" in line:
             usr = re.search(r'(\blogname=)(\w+)', line)
@@ -1166,10 +1169,14 @@ def reportResults(service, attacks_conf, output, graph):
             top = sorted(failedTries, key =failedTries.get, reverse = True )
             out.write("\nTop 10 failed Requests by IP per minute\n\n")
             for x in top[:10]:
-                out.write("\tIP: %s Retries: %s Date: %s Country: %s\n" % (x[0]+'    \t', str(failedTries[x])+'\t', x[1]+'\t', getCountry(x[0]) ))
+                if x[0] is not None:
+                    out.write("\tIP: %s Retries: %s Date: %s Country: %s\n" % (x[0]+'    \t', str(failedTries[x])+'\t', x[1]+'\t', getCountry(x[0]) ))
             for x in top:
-                if failedTries[x] > sshTries:
+                if failedTries[x] > bf_tries:
                         ips.add(x[0])    
+
+            for x in ssh_evidence:
+                evd.write('%s' % (x))
 
             #The attacks will be graphed if the option is enabled.
             if graph is True:
