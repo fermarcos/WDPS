@@ -606,7 +606,7 @@ def analyzeMailLogs(log_file):
             if re.search("reject",line):
                 count_rejected += 1
                 if re.search("from=<",line) is not None:
-                    if re.search("(from=<)(.+)(> to=)",line).group(2) is not None
+                    if re.search("(from=<)(.+)(> to=)",line).group(2) is not None:
                         rejected = re.search("(from=<)(.+)(> to=)",line).group(2)
                         if rejected  is not None: rejected_dict[rejected] = rejected_dict.get(rejected , 0) + 1
             if re.search("Insufficiented system storage",line):
