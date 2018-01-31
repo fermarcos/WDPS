@@ -905,7 +905,8 @@ def analyzePhpLogs(log_file):
                 	error_deprecated += 1
 
                 date = re.sub(r'\.[0-9]+ ',' ',' '.join(line.split()[0:5]).strip("]").strip("["))
-                desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
+                if re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line) is not None:
+                    desc =re.search(r'(PHP ([a-zA-Z]+)( [a-zA-Z]+)?:  )(.+)( in .+)',line).group(4)
                 file_ref = re.search(r'( in )(.+)',line).group(2)
 
                 php_obj = phpLog(c_error, '', desc, date, file_ref)
